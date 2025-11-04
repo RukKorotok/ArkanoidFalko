@@ -60,7 +60,28 @@ namespace Arkanoid
 		window.draw(m_sprite);
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void Base::RefreshBasePosition(float xPosition)
+	Base::Base()
+	{
+		BaseSegment* currentSegment;
+		sf::Vector2f location;
+		currentSegment = new BaseSegment(0, false);
+		m_segments.push_back(currentSegment);
+		currentSegment = new BaseSegment(1, true);
+		m_segments.push_back(currentSegment);
+		currentSegment = new BaseSegment(-1, true);
+		m_segments.push_back(currentSegment);
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	Base::~Base()
+	{
+		for (BaseSegment* segment : m_segments)
+		{
+			delete segment;
+		}
+		m_segments.clear();
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void Base::UpdateBase(float xPosition)
 	{
 		for (int i = 0; i < m_segments.size(); i++)
 		{
@@ -95,33 +116,5 @@ namespace Arkanoid
 		{
 			currentSegment->DrawSegment(window);
 		}
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	Base::Base()
-	{
-		BaseSegment* currentSegment;
-		sf::Vector2f location;
-		currentSegment = new BaseSegment(0, false);
-		m_segments.push_back(currentSegment);
-		currentSegment = new BaseSegment(1, true);
-		m_segments.push_back(currentSegment);
-		currentSegment = new BaseSegment(-1, true);
-		m_segments.push_back(currentSegment);
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	Base::~Base()
-	{
-		for (BaseSegment* segment : m_segments)
-		{
-			delete segment;
-		}
-		m_segments.clear();
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	void Base::SetToDefault() {
-		m_segments.clear();
-		m_isNormalOrientation = true;
-		m_toEndDobleSpeedSteps = 0;
-		m_toEndDisorientationSteps = 0;
 	}
 }

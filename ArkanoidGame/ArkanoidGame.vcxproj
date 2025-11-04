@@ -163,6 +163,8 @@
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameMain.cpp" />
     <ClCompile Include="GridManager.cpp" />
+    <ClCompile Include="ini.c" />
+    <ClCompile Include="INIReader.cpp" />
     <ClCompile Include="InputHandlers.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Base.cpp" />
@@ -176,6 +178,8 @@
     <ClInclude Include="Config.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GridManager.h" />
+    <ClInclude Include="ini.h" />
+    <ClInclude Include="INIReader.h" />
     <ClInclude Include="InputHandlers.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Base.h" />

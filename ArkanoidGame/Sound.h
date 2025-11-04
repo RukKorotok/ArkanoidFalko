@@ -1,6 +1,6 @@
 #pragma once
 #include "SFML/Audio.hpp"
-
+//For next rev
 namespace Arkanoid
 {
 	class Game;

@@ -1,6 +1,7 @@
 #include "Block.h"
 #include "Game.h"
 
+//For next rev
 namespace Arkanoid
 {
 	Block::Block(IndexEvents type, int index)

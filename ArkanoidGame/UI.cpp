@@ -2,175 +2,412 @@
 #include "Game.h"
 
 namespace Arkanoid
-{
+{	
+	//RecordItem
 	//-----------------------------------------------------------------------------------------------------------
-	Menu::Menu(MenuType type)
+	RecordItem::RecordItem(std::string name, int score)
 	{
-		MenuStates currentState = MenuStates::MainMenu;
-		MenuItemsList passiveItems;
-		std::map<int, ParticipantString> recordList;
-		std::vector<std::string > currentPassiveItems;
-
-		assert(m_font.loadFromFile(RESOURCES_PATH + "Fonts/Roboto-Regular.ttf"));
-		switch (type)
+		m_name = name;
+		m_score = score;
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void RecordItem::Draw(sf::RenderWindow& window, Position2D tabIndex)
+	{
+		UI::GetInstance().InitText(m_text, m_name + " " + std::to_string(m_score), sf::Color::White, m_MENU_ITEMS_INDETATION.x - MENU_INDENTATION_OFFSET * tabIndex.x, m_MENU_ITEMS_INDETATION.y + 50.0f * tabIndex.y);
+		window.draw(m_text);
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	std::string RecordItem::GetName()
+	{
+		return m_name;
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	int RecordItem::GetScore()
+	{
+		return m_score;
+	}
+	//MenuItem
+	//-----------------------------------------------------------------------------------------------------------
+	MenuItem::MenuItem(std::string text, std::string action)
+	{
+		m_string = text;
+		m_action = action;
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void MenuItem::Draw(sf::RenderWindow& window, Position2D tabIndex)
+	{
+		sf::Color color;
+		if (m_action == "")
 		{
-		case MenuType::StartMenu:
-		{
-			currentState = MenuStates::MainMenu;
-
-			m_menuActiveItemsList[MenuStates::MainMenu] = { {"Mad balL"},
-				{
-					{MenuEvents::GameStart, "Start game", false },
-					{MenuEvents::GoToDifficultyLevel, "Set difficulty level", false },
-					{MenuEvents::OpenRecordList, "Records list", false},
-					{MenuEvents::GoToSettings, "Settings", false},
-					{MenuEvents::CloseGame, "Exit", false}
-				}
-			};
-			m_menuPassiveItemsList[MenuStates::MainMenu] = {};
-
-			m_menuActiveItemsList[MenuStates::RecordsList] = {{"Settings"},
-				{
-					{MenuEvents::GoBack, "Back", false}
-				}
-			};
-			m_menuPassiveItemsList[MenuStates::RecordsList] = {};
-
-			m_menuActiveItemsList[MenuStates::DifficultyLevel] = {{"Difficulty level"},
-				{
-					{MenuEvents::SetEasyDifficulty, "Easy", true},
-					{MenuEvents::SetNotEasyDifficulty, "Heavier than simple", true},
-					{MenuEvents::SetMediumDifficulty, "Medium", true},
-					{MenuEvents::SetNotMediumDifficulty, "Heavier than middle", true},
-					{MenuEvents::SetHardDifficulty, "Hard", true},
-					{MenuEvents::GoBack, "Back", false}
-				}
-			};
-			m_menuPassiveItemsList[MenuStates::DifficultyLevel] = {};
-
-			m_menuActiveItemsList[MenuStates::Settings] = { {"Difficulty level"},
-				{
-					{MenuEvents::SetSound, "Sound", true},
-					{MenuEvents::SetMusic, "Music", true},
-					{MenuEvents::GoBack, "Back", false}
-				}
-			};
-			m_menuPassiveItemsList[MenuStates::Settings] = {};
-
-			break;
+			color = sf::Color::White;
 		}
-		case MenuType::PauseMenu:
+		else
 		{
-			currentState = MenuStates::Pause;
-
-			m_menuActiveItemsList[MenuStates::Pause] = {{"Pause"},
-				{
-					{MenuEvents::GoBack, "resume game", false },
-					{MenuEvents::InMainMenu, "In main menu", false },
-				}
-			};
-			m_menuPassiveItemsList[MenuStates::Pause] = {};
-
-			break;
-		}
-		case MenuType::AfterDeathMenu:
-		{
-			currentState = MenuStates::Death;
-
-			m_menuActiveItemsList[MenuStates::Death] = {{"Game Over"},
-				{
-					{MenuEvents::InMainMenu, "In main menu", false},
-					{MenuEvents::CloseGame, "Exit", false}
-				}
-			};
-			m_menuPassiveItemsList[MenuStates::Death] = {};
-
-			break;
-		}
-		case MenuType::RecordListMenu:
-		{
-			currentState = MenuStates::RecordsList;
-
-			m_menuActiveItemsList[MenuStates::RecordsList] = { {"Records list"},
-				{
-					{MenuEvents::GoBack, "Back", false}
-				}
-			};
-
-			recordList = UI::GetInstance().GetRecordList();
-			for (std::pair<int, ParticipantString> currentItem : recordList)
+			if (m_selected)
 			{
-				currentPassiveItems.push_back(std::to_string(currentItem.first) + " - " + currentItem.second.participant + " " + std::to_string(currentItem.second.score));
+				color = sf::Color::Green;
 			}
-			m_menuPassiveItemsList[currentState] = currentPassiveItems;
-			break;
+			else
+			{
+				color = sf::Color::Yellow;
+			}
 		}
-		case MenuType::AcceptMenu:
+
+		UI::GetInstance().InitText(m_text, m_string, color, m_MENU_ITEMS_INDETATION.x - MENU_INDENTATION_OFFSET * tabIndex.x, m_MENU_ITEMS_INDETATION.y + 50.0f * tabIndex.y);
+		window.draw(m_text);
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void MenuItem::ActionHandle()
+	{
+		std::vector<std::shared_ptr<Menu>> menu = UI::GetInstance().GetMenu();
+		menu[menu.size() - 1]->SetMenuPointer(1);
+
+		if (m_action == " ><|")
 		{
-			currentState = MenuStates::Accept;
+			menu[menu.size() - 1]->RemoveMenuStackItem();
+		}
+		else
+		{
+			menu[menu.size() - 1]->AddMenuItems(m_action, UI::GetInstance().GetReader());
+		}
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void MenuItem::SetSelection(bool selected)
+	{
+		m_selected = selected;
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	std::string MenuItem::GetAction()
+	{
+		return m_action;
+	}
+	bool MenuItem::GetSelected()
+	{
+		return m_selected;
+	}
+	//MenuItemToOpenSubmenu
+	//-----------------------------------------------------------------------------------------------------------
+	MenuItemToOpenSubmenu::MenuItemToOpenSubmenu(std::string text, std::string action)
+		: MenuItem(text, action){}
+	//-----------------------------------------------------------------------------------------------------------
+	void MenuItemToOpenSubmenu::ActionHandle()
+	{
+		UI::GetInstance().CreateMenu(m_action);
+	}
+	//MenuItemToSetState
+	//-----------------------------------------------------------------------------------------------------------
+	MenuItemToSetState::MenuItemToSetState(std::string text, std::string mainAction, std::string secondAction, std::string attribute)
+		: MenuItem(text, mainAction)
+	{
 
-			m_menuActiveItemsList[MenuStates::Accept] = { {"Are you sure"},
+		m_atribute = attribute;
+		if (attribute != "")
+		{
+			if (attribute == " |_|")
+			{
+				m_isHaveCheckBox = true;
+			}
+			if (attribute == " =A ")
+			{
+				m_isOpenSubMenu = true;
+			}
+			m_secondAction = secondAction;
+		}
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void MenuItemToSetState::ActionHandle()
+	{
+		std::vector<std::shared_ptr<Menu>> menu = UI::GetInstance().GetMenu();
+
+		if (m_SETTINGS_MAP.count(m_action) > 0 )
+		{ 
+			//set settings
+			Game::GetInstance().SetGameSettings(m_SETTINGS_MAP.find(m_action)->second);
+		}
+		else if (m_DIFFICULTY_MAP.count(m_action) > 0)
+		{
+			//set diff
+			Game::GetInstance().SetGameDifficulty(m_DIFFICULTY_MAP.find(m_action)->second);
+		}
+		else if (m_STATE_ACTIONS_MAP.count(m_action) > 0)
+		{
+			if (m_isOpenSubMenu)
+			{
+				UI::GetInstance().CreateMenu(m_secondAction);
+			}
+			else
+			{
+				switch (m_STATE_ACTIONS_MAP.find(m_action)->second)
 				{
-					{MenuEvents::AcceptSubMenu, "Yes", false},
-					{MenuEvents::GoBack, "No", false}
+				case State::ResumeGame:
+				{
+					Game::GetInstance().RemoveGameState();
+					break;
 				}
-			};
-			m_menuPassiveItemsList[MenuStates::Accept] = {};
+				case State::ExitGame:
+				{
+					Game::GetInstance().ExitFromGame();
+					break;
+				}
+				case State::GameInProgress:
+				{
+					Game::GetInstance().AddGameState(m_STATE_ACTIONS_MAP.find(m_action)->second, Game::GetInstance().GetCurrentGameState()->GetScore());
+					break;
+				}
+				case State::GameOver:
+				{
+					Game::GetInstance().AddGameState(m_STATE_ACTIONS_MAP.find(m_action)->second, Game::GetInstance().GetCurrentGameState()->GetScore());
+					break;
+				}
+				case State::Main:
+				{
+					UI::GetInstance().RemoveMenu();
+					Game::GetInstance().ResetGame();
 
-			break;
+					break;
+				}
+				}
+			}
 		}
+		else
+		{
+			std::cerr << "Action not found" << std::endl;
 		}
-		m_menuStack.push({ currentState, m_menuActiveItemsList.find(currentState)->second, m_menuPassiveItemsList.find(currentState)->second,
-			int(m_menuActiveItemsList.find(currentState)->second.items.size()), 0 });
-		m_menuPointer = 0;
+
+		if (m_atribute == " ><|" || m_atribute == " <>|")
+		{
+			menu[menu.size() - 1]->RemoveMenuStackItem();
+		}
+	}
+	void MenuItemToSetState::Draw(sf::RenderWindow& window, Position2D tabIndex)
+	{
+		MenuItem::Draw(window, tabIndex);
+
+		if (m_isHaveCheckBox)
+		{
+			UI::GetInstance().InitShape(m_checkBoxFrame, m_CHECKBOX_SIZE, m_CHECKBOX_SIZE, 1.1f, sf::Color::White, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * tabIndex.x, m_MENU_CHECKBOX_INDETATION.y + 50.0f * tabIndex.y);
+			window.draw(m_checkBoxFrame);
+			if (m_SETTINGS_MAP.count(m_action) > 0)
+			{
+				if (!(static_cast<uint32_t>(m_SETTINGS_MAP.find(m_action)->second) & Game::GetInstance().GetSetings()))
+				{
+					UI::GetInstance().InitShape(m_checkBox, m_CHECKBOX_SIZE, m_CHECKBOX_SIZE, 1.0f, sf::Color::Green, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * tabIndex.x, m_MENU_CHECKBOX_INDETATION.y + 50.0f * tabIndex.y);
+					window.draw(m_checkBox);
+				}
+			}
+			else if (m_DIFFICULTY_MAP.count(m_action) > 0)
+			{
+				if (m_DIFFICULTY_MAP.find(m_action)->second == Game::GetInstance().GetDifficultyLevel())
+				{
+					UI::GetInstance().InitShape(m_checkBox, m_CHECKBOX_SIZE, m_CHECKBOX_SIZE, 1.0f, sf::Color::Green, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * tabIndex.x, m_MENU_CHECKBOX_INDETATION.y + 50.0f * tabIndex.y);
+					window.draw(m_checkBox);
+				}
+			}
+		}
+	}
+	//Menu
+	//-----------------------------------------------------------------------------------------------------------
+	Menu::Menu(const std::string& section, const INIReader& reader, int index)
+	{
+		AddMenuItems(section, reader);
+		m_index = index;
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	Menu::~Menu()
 	{
-		m_menuItemsText.clear();
-		m_menuItems.clear();
-		m_menuActiveItemsList.clear();
-		m_menuPassiveItemsList.clear();
 		while (!m_menuStack.empty())
 		{
 			m_menuStack.pop();
 		}
 	}
+	void Menu::DrawMenu(sf::RenderWindow& window, Position2D tabMenu)
+	{
+		float i = 0.0f;
+		for (auto mapItem : m_menuStack.top())
+		{
+			mapItem.second->Draw(window, { tabMenu.y + m_index, tabMenu.x + i } );
+			i = i + 1.0f;
+		}
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void Menu::AddMenuItems(const std::string& section, const INIReader& reader)
+	{
+		m_menuStack.push(LoadMenuItems(section, reader));
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	std::map<int, std::shared_ptr<MenuItem>> Menu::LoadMenuItems(const std::string& section, const INIReader& reader)
+	{
+		std::vector<std::shared_ptr<Menu>> menuList;
+		const size_t simbol_size = 4;
+		std::map<int, std::shared_ptr<MenuItem>> menuItems;
+		size_t mainActionPos = 0;
+		size_t secondActionPos = 0;
+		int id = 0;
+		std::string value = "";
+		std::string mainAction = "";
+		std::string secondAction = "";
+		std::string attribute = "";
+		std::map<int, MenuItem*> menu;
+		std::map<std::string, std::string> sectionData;
+
+		auto proccess_actions = [&]()
+			{
+				mainAction = value.substr(mainActionPos + simbol_size, secondActionPos - mainActionPos - simbol_size);
+				attribute = value.substr(secondActionPos, simbol_size);
+				secondAction = value.substr(secondActionPos + simbol_size);
+				value = value.substr(0, mainActionPos);
+			};
+
+		for (std::string key : reader.Keys(section))
+		{
+			sectionData[key] = reader.Get(section, key, "error");
+		}
+		for (const auto& pair : sectionData)
+		{
+			try
+			{
+				id = std::stoi(pair.first);
+				value = pair.second;
+				if (id == 0)
+				{	
+					//Create menu title
+					mainAction = "";
+					menuItems[id] = std::make_shared <MenuItem>(value, mainAction);
+				}
+				else
+				{
+					//Create simple item
+					mainActionPos = value.find(" -> ");
+					if (mainActionPos != std::string::npos)
+					{
+						mainAction = value.substr(mainActionPos + simbol_size);
+						value = value.substr(0, mainActionPos);
+						menuItems[id] = std::make_shared <MenuItem>(value, mainAction);
+					}
+
+					//Create submenu action item
+					mainActionPos = value.find(" =| ");
+					if (mainActionPos != std::string::npos)
+					{
+						mainAction = value.substr(mainActionPos + simbol_size);
+						value = value.substr(0, mainActionPos);
+						menuItems[id] = std::make_shared<MenuItemToOpenSubmenu>(value, mainAction);
+					}
+
+					//Create state chenge item
+					mainActionPos = value.find(" => ");
+					if (mainActionPos != std::string::npos)
+					{
+						//whith checkBox
+						secondActionPos = value.find(" |_|");
+						if (secondActionPos != std::string::npos)
+						{
+							proccess_actions();
+						}
+						//open accept menu
+						secondActionPos = value.find(" =A ");
+						if (secondActionPos != std::string::npos)
+						{
+							proccess_actions();
+						}
+						//close item
+						secondActionPos = value.find(" ><|");
+						if (secondActionPos != std::string::npos)
+						{
+							proccess_actions();
+						}
+						menuItems[id] = std::make_shared <MenuItemToSetState>(value, mainAction, secondAction, attribute);
+					}
+
+					//close item and make action
+					mainActionPos = value.find(" <>|");
+					if (mainActionPos != std::string::npos)
+					{
+						attribute = value.substr(mainActionPos, simbol_size);
+						value = value.substr(0, mainActionPos);
+						menuList = UI::GetInstance().GetMenu();
+						menuItems[id] = std::make_shared <MenuItemToSetState>(value, menuList[menuList.size() - 1]->GetStack().top().find(menuList[menuList.size() - 1]->GetMenuPointer())->second->GetAction(), "", attribute);
+					}
+
+					//close action
+					mainActionPos = value.find(" ><|");
+					if (mainActionPos != std::string::npos)
+					{
+						mainAction = value.substr(mainActionPos);
+						value = value.substr(0, mainActionPos);
+						menuItems[id] = std::make_shared <MenuItem>(value, mainAction);
+					}
+				}
+			}
+			catch (const std::invalid_argument&) {}
+			//Set selected item
+			if (id == m_menuPointer)
+			{
+				menuItems.find(id)->second->SetSelection(true);
+			}
+		}	
+		return menuItems;
+	}
 	//-----------------------------------------------------------------------------------------------------------
 	void Menu::SwitchMenuItem(bool down)
 	{
-		if (down == true && m_menuPointer < m_menuStack.top().pointsCount - 1)
+		int i = 0;
+		std::map<int, std::shared_ptr<MenuItem>> currentItems = m_menuStack.top();
+
+		if (down == true && m_menuPointer < currentItems.size() - 1 )
 		{
 			m_menuPointer++;
 		}
-		else if (down == false && m_menuPointer > 0)
+		else if (down == false && m_menuPointer > 1)
 		{
 			m_menuPointer--;
 		}
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	void Menu::GoBack()
-	{
-		if (m_menuStack.size() > 1)
+		for (auto item : currentItems)
 		{
-			m_menuPointer = m_menuStack.top().previewPointer;
-			m_menuStack.pop();
+			if (m_menuPointer == i)
+			{
+				item.second->SetSelection(true);
+			}
+			else
+			{
+				item.second->SetSelection(false);
+			}
+			i++;
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	std::stack<MenuStateInfo> Menu::GetStack()
+	std::stack<std::map<int, std::shared_ptr<MenuItem>>> Menu::GetStack()
 	{
 		return m_menuStack;
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void Menu::AddMenuStackItem(MenuStateInfo menuItem)
+	void Menu::AddMenuStackItem(std::map<int, std::shared_ptr<MenuItem>> menuItem)
 	{
 		m_menuStack.push(menuItem);
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	void Menu::RemoveMenuStackItem()
 	{
+		int i = 0;
+		//remove items
 		m_menuStack.pop();
+		//remove menu
+		if (m_menuStack.empty())
+		{
+			UI::GetInstance().RemoveMenu(*this);
+		}
+		else
+		{
+			for (auto item : m_menuStack.top())
+			{
+				if (item.second->GetSelected())
+				{
+					m_menuPointer = i;
+					continue;
+				}
+				i++;
+			}
+		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	int Menu::GetMenuPointer()
@@ -183,204 +420,44 @@ namespace Arkanoid
 		m_menuPointer = pointer;
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	std::map<MenuStates, MenuItemsList> Menu::GetMenuActiveItemList()
+	std::map<int, std::shared_ptr<MenuItem>> Menu::GetMenuActiveItemList()
 	{
-		return m_menuActiveItemsList;
+		return m_menuStack.top();
 	}
+	//RecordsMenu
 	//-----------------------------------------------------------------------------------------------------------
-	std::map<MenuStates, std::vector<std::string>> Menu::GetMenuPassiveItemList()
+	void RecordsMenu::DrawMenu(sf::RenderWindow& window, Position2D tabMenu)
 	{
-		return m_menuPassiveItemsList;
+		std::vector<std::shared_ptr<RecordItem>> score = Game::GetInstance().ReadRecordsList();
+
+		float i = 0.0f;
+		bool isScoreDrawed = false;
+
+		for (const auto mapItem : m_menuStack.top())
+		{
+			//Draw title and active items
+			mapItem.second->Draw(window, { tabMenu.y + m_index, tabMenu.x + i });
+			i = i + 1.0f;
+			if (!isScoreDrawed)
+			{
+				isScoreDrawed = true;
+
+				//Draw records items
+				for (const auto scoreItem : score)
+				{
+					scoreItem->Draw(window, { tabMenu.y + m_index, tabMenu.x + i });
+					i = i + 1.0f;
+				}
+			}
+		}
 	}
-	//-----------------------------------------------------------------------------------------------------------
-	UI::UI()
-	{
-		Menu* menu = new Menu(MenuType::StartMenu);
-		m_currentMenuList.push_back(menu);
-
-		assert(m_mainMenueTexture.loadFromFile(RESOURCES_PATH + "\\GameStart.png"));
-		assert(m_font.loadFromFile(RESOURCES_PATH + "Fonts/Roboto-Regular.ttf"));
-
-		int i = 0;
-		float mainMenueSpriteSize = SCREEN_HEIGHT * 0.9f;
-		float menuIndentation = SCREEN_WIDTH - 250.0f;
-
-		// Init UI sprites
-		InitSprite(m_mainMenuSprite, m_mainMenueTexture, 0.38f, 0.35f);
-
-		// Init UI text
-		InitText(m_gameText, m_font, SCORE_TITLE, sf::Color::Yellow, SCREEN_WIDTH - 100.0f, 5.0f);
-		InitText(m_nameInputText, m_font, INPUT_TITLE, sf::Color::Yellow, SCREEN_WIDTH * 0.25f, SCREEN_HEIGHT * 0.25f);
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	UI::~UI()
-	{
-		m_currentMenuList.clear();
-		m_recordListText.clear();
-	}
+	//UI
 	//-----------------------------------------------------------------------------------------------------------
 	void UI::DrawMenu(sf::RenderWindow& window)
 	{
-		sf::Text itemText;
-		sf::RectangleShape checkboxFraim;
-		sf::RectangleShape checkbox;
-		sf::Color currentColor = sf::Color::White;
-		Menu* currentMenu;
-		std::stack<MenuStateInfo> currentMenuStack;
-		int menuPointsCount = 0;
-		int passiveIttemIndex = 0;
-		int activeItenIndex = 0;
-		int menuIndex = 0;
-
-		float maxYPos = 0;
-		float currentYPos = 0;
-
-		window.clear();
-
-		for (menuIndex = 0; menuIndex < m_currentMenuList.size(); menuIndex++)
+		for(int i = 0; i < m_currentMenuList.size(); i++)
 		{
-			currentMenu = m_currentMenuList[menuIndex];
-			currentMenuStack = currentMenu->GetStack();
-			// check menu state
-			switch (currentMenuStack.top().state)
-			{
-			case MenuStates::MainMenu:
-			{
-				window.draw(m_mainMenuSprite);
-				break;
-			}
-			case MenuStates::DifficultyLevel:
-			{
-
-				break;
-			}
-			case MenuStates::RecordsList:
-			{
-
-				break;
-			}
-			case MenuStates::Settings:
-			{
-
-				break;
-			}
-			}
-
-			if (currentMenuStack.top().menuPassiveItems.size() > 0)
-			{
-				for (passiveIttemIndex = 0; passiveIttemIndex < currentMenuStack.top().menuPassiveItems.size() - 1; passiveIttemIndex++)
-				{
-					UI::GetInstance().InitText(itemText, m_font, currentMenuStack.top().menuPassiveItems[passiveIttemIndex], currentColor, m_MENU_ITEMS_INDETATION.x - MENU_INDENTATION_OFFSET * menuIndex, m_MENU_ITEMS_INDETATION.y + 50.0f * passiveIttemIndex);
-					window.draw(itemText);
-				}
-			}
-
-			// Draw menu
-			for (activeItenIndex = 0; activeItenIndex < currentMenuStack.top().menuActiveItems.items.size(); activeItenIndex++)
-			{
-				if (currentMenu->GetMenuPointer() == activeItenIndex)
-				{
-					currentColor = sf::Color::Green;
-				}
-				else
-				{
-					currentColor = sf::Color::Yellow;
-				}
-				UI::GetInstance().InitText(itemText, m_font, currentMenuStack.top().menuActiveItems.items[activeItenIndex].menuPointTitle, currentColor, m_MENU_ITEMS_INDETATION.x - MENU_INDENTATION_OFFSET * menuIndex, m_MENU_ITEMS_INDETATION.y + 50.0f * (activeItenIndex + passiveIttemIndex) );
-				window.draw(itemText);
-
-				if (currentMenuStack.top().menuActiveItems.items[activeItenIndex].isHaveCheckBox)
-				{
-					UI::GetInstance().InitShape(checkboxFraim, CHECKBOX_SIZE, CHECKBOX_SIZE, 1.1f, sf::Color::White, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * menuIndex, m_MENU_CHECKBOX_INDETATION.y + 50.0f * (activeItenIndex + passiveIttemIndex));
-					window.draw(checkboxFraim);
-
-					switch (currentMenuStack.top().menuActiveItems.items[activeItenIndex].event)
-					{
-					case MenuEvents::SetSound:
-					{
-
-						if (!(Game::GetInstance().GetSetings() & static_cast<uint32_t>(SettingsMode::SoundOn)))
-						{
-							UI::GetInstance().InitShape(checkbox, CHECKBOX_SIZE, CHECKBOX_SIZE, 1.0f, sf::Color::Black, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * menuIndex, m_MENU_CHECKBOX_INDETATION.y + 50.0f * (activeItenIndex + passiveIttemIndex));
-							window.draw(checkbox);
-						}
-						break;
-					}
-					case MenuEvents::SetMusic:
-					{
-						if (!(Game::GetInstance().GetSetings() & static_cast<uint32_t>(SettingsMode::MusicOn)))
-						{
-							UI::GetInstance().InitShape(checkbox, CHECKBOX_SIZE, CHECKBOX_SIZE, 1.0f, sf::Color::Black, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * menuIndex, m_MENU_CHECKBOX_INDETATION.y + 50.0f * (activeItenIndex + passiveIttemIndex));
-							window.draw(checkbox);
-						}
-						break;
-					}
-					case MenuEvents::SetEasyDifficulty:
-					{
-						if (Game::GetInstance().GetDifficultyLevel() == Easy)
-						{
-							UI::GetInstance().InitShape(checkbox, CHECKBOX_SIZE, CHECKBOX_SIZE, 1.0f, sf::Color::Black, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * menuIndex, m_MENU_CHECKBOX_INDETATION.y + 50.0f * (activeItenIndex + passiveIttemIndex));
-							window.draw(checkbox);
-						}
-						break;
-					}
-					case MenuEvents::SetNotEasyDifficulty:
-					{
-						if (Game::GetInstance().GetDifficultyLevel() == NotEasy)
-						{
-							UI::GetInstance().InitShape(checkbox, CHECKBOX_SIZE, CHECKBOX_SIZE, 1.0f, sf::Color::Black, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * menuIndex, m_MENU_CHECKBOX_INDETATION.y + 50.0f * (activeItenIndex + passiveIttemIndex));
-							window.draw(checkbox);
-						}
-						break;
-					}
-					case MenuEvents::SetMediumDifficulty:
-					{
-						if (Game::GetInstance().GetDifficultyLevel() == Medium)
-						{
-							UI::GetInstance().InitShape(checkbox, CHECKBOX_SIZE, CHECKBOX_SIZE, 1.0f, sf::Color::Black, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * menuIndex, m_MENU_CHECKBOX_INDETATION.y + 50.0f * (activeItenIndex + passiveIttemIndex));
-							window.draw(checkbox);
-						}
-						break;
-					}
-					case MenuEvents::SetNotMediumDifficulty:
-					{
-						if (Game::GetInstance().GetDifficultyLevel() == NotMedium)
-						{
-							UI::GetInstance().InitShape(checkbox, CHECKBOX_SIZE, CHECKBOX_SIZE, 1.0f, sf::Color::Black, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * menuIndex, m_MENU_CHECKBOX_INDETATION.y + 50.0f * (activeItenIndex + passiveIttemIndex));
-							window.draw(checkbox);
-						}
-						break;
-					}
-					case MenuEvents::SetHardDifficulty:
-					{
-						if (Game::GetInstance().GetDifficultyLevel() == Hard)
-						{
-							UI::GetInstance().InitShape(checkbox, CHECKBOX_SIZE, CHECKBOX_SIZE, 1.0f, sf::Color::Black, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * menuIndex, m_MENU_CHECKBOX_INDETATION.y + 50.0f * (activeItenIndex + passiveIttemIndex));
-							window.draw(checkbox);
-						}
-						break;
-					}
-					}
-				}
-			}
-			window.display();
-			////draw record list and input text
-	//if (game.ui.drawPopUpMenu)
-	//{
-	//	window.draw(game.ui.nameInputText);
-	//}
-	//else
-	//{
-	//	i = 0;
-	//	for (const std::pair<int, ParticipantString> pair : game.ui.recordListText)
-	//	{
-	//		if (i < 5)
-	//		{
-	//			window.draw(pair.second.listText);
-	//		}
-	//		i++;
-	//	}
-	//}
+			m_currentMenuList[i]->DrawMenu(window, { float(i), 0.0f });
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
@@ -405,100 +482,18 @@ namespace Arkanoid
 		shape.setFillColor(color);
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void UI::InitText(sf::Text& text, const sf::Font& font, const std::string title, const sf::Color& color, const float heigh, const float width)
+	void UI::InitText(sf::Text& text, const std::string title, const sf::Color& color, const float heigh, const float width)
 	{
-		text.setFont(font);
+		text.setFont(m_font);
 		text.setCharacterSize(TEXT_SIZE - 5);
 		text.setString(title);
 		text.setFillColor(color);
 		text.setPosition(heigh, width);
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void UI::InitRecordsList()
-	{
-		int score = 0;
-		ParticipantString participantString;
-		const int recordListLenght = sizeof(OPPONENTS_NAMES_ITEMS) / sizeof(OPPONENTS_NAMES_ITEMS[0]);
-		std::pair<std::string, int> tempList[recordListLenght];
-
-		//Generate opponents score
-		for (int i = 0; i < recordListLenght; ++i)
-		{
-			score = rand() % MAX_OPPONENTS_SCORE + 1;
-			tempList[i] = { OPPONENTS_NAMES_ITEMS[i], score };
-		}
-
-		//Sort
-		std::sort(tempList, tempList + recordListLenght, [](const std::pair<std::string, int>& a, const std::pair<std::string, int>& b)
-			{
-				return a.second > b.second;
-			});
-
-		//Add list map
-		for (int i = 0; i < recordListLenght; i++)
-		{
-			participantString.participant = tempList[i].first;
-			participantString.score = tempList[i].second;
-
-			m_recordListText[i] = participantString;
-		}
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	void UI::RefreshRecordList(Game& game)
-	{
-		const int recordList = int(m_recordListText.size()) + 1;
-		int i = 0;
-		int j = 0;
-		std::vector<ParticipantString> tempList;
-		tempList.resize(recordList);
-		ParticipantString insertValue;
-
-		// Get values
-		for (const std::pair<int, ParticipantString> pair : m_recordListText)
-		{
-			tempList[i] = pair.second;
-			++i;
-		}
-		insertValue.participant = PLAYER_NAME;
-		insertValue.score = game.GetScore();
-		tempList[i] = insertValue;
-
-		m_recordListText.clear();
-
-		//Insertion sort
-		for (i = 1; i < recordList; ++i)
-		{
-			insertValue = tempList[i];
-			j = i - 1;
-
-			while (j >= 0 && tempList[j].score < insertValue.score)
-			{
-				tempList[j + 1] = tempList[j];
-				j = j - 1;
-			}
-			tempList[j + 1] = insertValue;
-		}
-
-		// Record list filling
-		for (i = 0; i < recordList; ++i)
-		{
-			m_recordListText[i] = tempList[i];
-		}
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	std::map<int, ParticipantString> UI::GetRecordList()
-	{
-		return m_recordListText;
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	bool UI::IsSetNewRecord(Game& game)
-	{
-		return game.GetScore() > m_recordListText.find(0)->second.score;
-	}
-	//-----------------------------------------------------------------------------------------------------------
 	void UI::DrawGameUI(Game& game, sf::RenderWindow& window)
 	{
-		m_gameText.setString(SCORE_TITLE + std::to_string(game.GetScore()));
+		m_gameText.setString(SCORE_TITLE + std::to_string(game.GetCurrentGameState()->GetScore()));
 		window.draw(m_gameText);
 	}
 	//-----------------------------------------------------------------------------------------------------------
@@ -507,43 +502,86 @@ namespace Arkanoid
 		text.setString(string);
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void SetShapeColor(sf::RectangleShape& button, const sf::Color& color)
+	void UI::SetShapeColor(sf::RectangleShape& button, const sf::Color& color)
 	{
 		button.setFillColor(color);
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void SetTextColor(sf::Text& text, const sf::Color& color)
+	void UI::SetTextColor(sf::Text& text, const sf::Color& color)
 	{
 		text.setFillColor(color);
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void UI::CreateMenu(MenuType menuType)
+	std::shared_ptr<Menu> UI::CreateMenu(std::string section)
 	{
-		Menu* menu = new Menu(menuType);
-		m_currentMenuList.push_back(menu);
+		if (section == "RecordList")
+		{
+			std::shared_ptr<Menu> menu = std::make_shared<RecordsMenu>(section, *m_reader, m_currentMenuList.size());
+			m_currentMenuList.push_back(menu);
+			return menu;
+		}
+		else
+		{
+			std::shared_ptr<Menu> menu = std::make_shared<Menu>(section, *m_reader, m_currentMenuList.size());
+			m_currentMenuList.push_back(menu);
+			return menu;
+		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void UI::RemoveMenu(Menu* menu)
+	void UI::RemoveMenu(Menu& menu)
 	{
 		int i = 0;
-
+		Menu* menuAdress = &menu;
 		for (i = 0; i < m_currentMenuList.size(); i++)
 		{		
-			if (m_currentMenuList[i] == menu)
+			if (m_currentMenuList[i].get() == menuAdress)
 			{
-				delete m_currentMenuList[i];
 				m_currentMenuList.erase(m_currentMenuList.begin() + i);
 			}
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	std::vector<Menu*> UI::GetMenu()
+	std::vector<std::shared_ptr<Menu>> UI::GetMenu()
 	{
 		return m_currentMenuList;
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	sf::Font UI::GetFont()
+	INIReader UI::GetReader()
 	{
-		return m_font;
+		return *m_reader;
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void UI::RemoveMenu()
+	{
+		m_currentMenuList.clear();
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	UI::UI()
+	{
+		m_reader = new INIReader("../Config/Menu.ini");
+
+		if (m_reader->ParseError() < 0)
+		{
+			std::cerr << "Menu.ini not found" << std::endl;
+		}
+
+		assert(m_mainMenueTexture.loadFromFile(RESOURCES_PATH + "\\GameStart.png"));
+		assert(m_font.loadFromFile(RESOURCES_PATH + "Fonts/Roboto-Regular.ttf"));
+
+		int i = 0;
+		float mainMenueSpriteSize = SCREEN_HEIGHT * 0.9f;
+		float menuIndentation = SCREEN_WIDTH - 250.0f;
+
+		// Init UI sprites
+		InitSprite(m_mainMenuSprite, m_mainMenueTexture, 0.38f, 0.35f);
+
+		// Init UI text
+		InitText(m_gameText, SCORE_TITLE, sf::Color::Yellow, SCREEN_WIDTH - 100.0f, 5.0f);
+		InitText(m_nameInputText, INPUT_TITLE, sf::Color::Yellow, SCREEN_WIDTH * 0.25f, SCREEN_HEIGHT * 0.25f);
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	UI::~UI()
+	{
+		m_currentMenuList.clear();
 	}
 }

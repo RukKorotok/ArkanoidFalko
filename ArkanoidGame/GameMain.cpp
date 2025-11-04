@@ -10,16 +10,17 @@ int main()
 	using namespace Arkanoid;
 	bool isKeysPressed = false;
 	sf::Keyboard::Key pressedKey = sf::Keyboard::Unknown;
-	State currentState = State::Undefined;
+	State currentState = State::ExitGame;
 	int seed = (int)time(nullptr);
 	srand(seed);
 	sf::Event event;
 
 	// Init window
-	sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Snake game!");
+	sf::RenderWindow window(sf::VideoMode(SCREEN_WIDTH, SCREEN_HEIGHT), "Arkanoid game!");
 
+	Game::GetInstance().SetWindowRef(&window);
 	// Game initialization
-	UI::GetInstance().InitRecordsList();
+
 	Audio::GetInstance().InitAudio();
 	
 	// Init game clocks
@@ -56,77 +57,24 @@ int main()
 			}
 		}
 
-		// Check game states
-		switch (Game::GetInstance().GetState())
+		if (Game::GetInstance().GetCurrentGameState()->GetState() == State::GameInProgress)
 		{
-		case State::InMenu:
+			InputHandler::GetInstance().HandleInputInGame(float(sf::Mouse::getPosition(window).x));
+			Game::GetInstance().GetCurrentGameState()->UpdateGame(window, deltaTime);
+		}
+		else
 		{
-			if (currentState != Game::GetInstance().GetState())
-			{
-				UI::GetInstance().DrawMenu(window);
-				Audio::GetInstance().PlaySound(SoundFile::IntroSound);
-				currentState = Game::GetInstance().GetState();
-			}
 			if (InputHandler::GetInstance().HandlerInputMenu(isKeysPressed))
 			{
-				UI::GetInstance().DrawMenu(window);
+				Game::GetInstance().GetCurrentGameState()->UpdateGame(window, deltaTime);
 				isKeysPressed = true;
 			}
-
-			break;
-		}
-		case State::InProgress:
-		{
-			currentState = Game::GetInstance().GetState();
-			InputHandler::GetInstance().HandleInputInGame(float(sf::Mouse::getPosition(window).x) );
-			Game::GetInstance().UpdateGame(deltaTime);
-			Ball::GetInstance().UpdateBall(deltaTime);
-			Game::GetInstance().DrawGame(window);
-			break;
-		}
-		case State::Paused:
-		{
-			if (currentState != Game::GetInstance().GetState())
+			if (currentState != Game::GetInstance().GetCurrentGameState()->GetState())
 			{
-				Audio::GetInstance().PlaySound(SoundFile::PauseSound);
-				currentState = Game::GetInstance().GetState();
+				Game::GetInstance().GetCurrentGameState()->UpdateGame(window, deltaTime);
+				currentState = Game::GetInstance().Game::GetInstance().GetCurrentGameState()->GetState();
 			}
-			if (InputHandler::GetInstance().HandlerInputMenu(isKeysPressed))
-			{
-				isKeysPressed = true;
-				Game::GetInstance().DrawGame(window);
-			}
-			break;
-		}
-		case State::GameOver:
-		{
-			GridManager::GetInstance().CleareEventMap();
-
-			if (currentState != Game::GetInstance().GetState())
-			{
-				if (UI::GetInstance().IsSetNewRecord(Game::GetInstance()))
-				{
-					UI::GetInstance().RefreshRecordList(Game::GetInstance());
-				}
-				else
-				{
-
-				}
-				Audio::GetInstance().PlaySound(SoundFile::DeathSound);
-				currentState = Game::GetInstance().GetState();
-			}
-			if (InputHandler::GetInstance().HandlerInputMenu(isKeysPressed))
-			{
-				isKeysPressed = true;
-			}
-			break;
-		}
-		case State::ExitGame:
-		{
-			Game::GetInstance().ExitFromGame(window);
-			break;
 		}
 		}
-	}
 	return 0;
 }

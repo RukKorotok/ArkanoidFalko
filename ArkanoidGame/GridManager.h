@@ -35,7 +35,6 @@ namespace Arkanoid
 		bool CheckIndexForFree(Game& game, int index);
 		int GetXCoordFromIndex(int index);
 		int GetYCoordFromIndex(int index);
-		int GetNewIndexForDirection(Direction direction, int index, bool forwardMove);
 		int GetRandomIndex();
 
 	private:

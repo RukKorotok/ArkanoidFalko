@@ -40,6 +40,12 @@
     <ClCompile Include="Ball.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="INIReader.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="ini.c">
+      <Filter>Sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Base.h">
@@ -73,6 +79,12 @@
       <Filter>Sources</Filter>
     </ClInclude>
     <ClInclude Include="Ball.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="INIReader.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="ini.h">
       <Filter>Sources</Filter>
     </ClInclude>
   </ItemGroup>

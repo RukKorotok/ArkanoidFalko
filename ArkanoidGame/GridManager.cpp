@@ -80,61 +80,6 @@ namespace Arkanoid
 		return index / m_Y_MULTY;
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	int GridManager::GetNewIndexForDirection(Direction direction, int index, bool forwardMove)
-	{
-		switch (direction)
-		{
-		case Direction::Right:
-		{
-			if (forwardMove)
-			{
-				return index + 1;
-			}
-			else
-			{
-				return index - 2;
-			}
-		}
-		case Direction::Up:
-		{
-			if (forwardMove)
-			{
-				return index - 1000;
-			}
-			else
-			{
-				return index + 2000;
-			}
-		}
-		case Direction::Left:
-		{
-			if (forwardMove)
-			{
-				return index - 1;
-			}
-			else
-			{
-				return index + 2;
-			}
-		}
-		case Direction::Down:
-		{
-			if (forwardMove)
-			{
-				return index + 1000;
-			}
-			else
-			{
-				return index - 2000;
-			}
-		}
-		default:
-		{
-			return -1;
-		}
-		}
-	}
-	//-----------------------------------------------------------------------------------------------------------
 	int GridManager::GetRandomIndex()
 	{
 		int indexX;

@@ -36,7 +36,7 @@ namespace Arkanoid
 		sprite.setOrigin(originX * spriteRect.width, originY * spriteRect.height);
 	}
 	//------------------------------------------------------------------------------------------------------------
-	bool Math::IsRectanglesCollide(Position2D rect1Position, Vector2D rect1Size, Position2D rect2Position, Vector2D rect2Size)
+	bool Math::IsRectanglesCollide(Position2D rect1Position, Position2D rect1Size, Position2D rect2Position, Position2D rect2Size)
 	{
 		float dx = (float)fabs(rect1Position.x - rect2Position.x);
 		float dy = (float)fabs(rect1Position.y - rect2Position.y);

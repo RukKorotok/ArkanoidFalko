@@ -2,7 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include "Config.h"
 #include "Math.h"
-
+//For next rev
 namespace Arkanoid
 {
 	class Game;

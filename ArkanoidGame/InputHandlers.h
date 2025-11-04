@@ -1,9 +1,7 @@
 #pragma once
-#include "SFML/Graphics.hpp"
 
 namespace Arkanoid
 {
-	class Game;
 
 	class InputHandler
 	{
@@ -16,7 +14,6 @@ namespace Arkanoid
 		}
 
 		void HandleInputInGame(float position);
-		bool HandleInputOnGameEnded(Game& game, bool isAllKeysRealised, sf::Event event);
 		bool HandlerInputMenu(bool isAllKeysRealised);
 
 	private:

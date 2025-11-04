@@ -5,8 +5,6 @@
 
 namespace Arkanoid
 {
-	class Game;
-
 	class BaseSegment
 	{
 	public:
@@ -33,27 +31,16 @@ namespace Arkanoid
 	{
 	public:
 
-		static Base& GetInstance()
-		{
-			static Base base;
-			return base;
-		}
+		Base();
+		~Base();
 
-		void RefreshBasePosition(float xPosition);
+		void UpdateBase(float xPosition);
 		void ChangeBaseColor(sf::Color color);
 		Position2D GetPosition();
 		Position2D GetBaseSize();
 		void DrawBase(sf::RenderWindow& window);
 
 	private:
-
-		Base();
-		~Base();
-
-		void SetToDefault();
-
-		Base(Game const&) = delete;
-		Base& operator = (Base const&) = delete;
 
 		const int m_START_SIZE = 3;
 
