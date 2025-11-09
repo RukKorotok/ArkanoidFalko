@@ -1,30 +1,24 @@
 #pragma once
-#include <SFML/Graphics.hpp>
-#include "Config.h"
-#include "Math.h"
+#include "Objects.h"
+#include "Interfaces.h"
 
 namespace Arkanoid
 {
-	class BaseSegment
+	class BaseSegment : public GameObject, public Collidable
 	{
+
 	public:
 
 		BaseSegment(int index, bool edge);
 		int GetIndex();
 		void SetPosition(float xPos);
-		Position2D GetPosition();
-		sf::Sprite GetSprite();
 		void SetColor(sf::Color color);
-		void DrawSegment(sf::RenderWindow& window);
+		void OnHit() override {}
 
 	private:
-
 		const float m_Y_POSITION_OFFSET = 50.0f;
 
 		int m_index = 0;
-		Position2D m_position;
-		sf::Sprite m_sprite;
-		sf::Texture m_segmentTexture;
 	};
 
 	class Base
@@ -36,8 +30,8 @@ namespace Arkanoid
 
 		void UpdateBase(float xPosition);
 		void ChangeBaseColor(sf::Color color);
-		Position2D GetPosition();
-		Position2D GetBaseSize();
+		Vector2D GetPosition();
+		Vector2D GetSize();
 		void DrawBase(sf::RenderWindow& window);
 
 	private:

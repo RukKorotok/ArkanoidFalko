@@ -36,7 +36,7 @@ namespace Arkanoid
 		sprite.setOrigin(originX * spriteRect.width, originY * spriteRect.height);
 	}
 	//------------------------------------------------------------------------------------------------------------
-	bool Math::IsRectanglesCollide(Position2D rect1Position, Position2D rect1Size, Position2D rect2Position, Position2D rect2Size)
+	bool Math::IsRectanglesCollide(Vector2D rect1Position, Vector2D rect1Size, Vector2D rect2Position, Vector2D rect2Size)
 	{
 		float dx = (float)fabs(rect1Position.x - rect2Position.x);
 		float dy = (float)fabs(rect1Position.y - rect2Position.y);
@@ -45,7 +45,7 @@ namespace Arkanoid
 			dy <= (rect1Size.y + rect2Size.y) / 2.f);
 	}
 	//------------------------------------------------------------------------------------------------------------
-	bool Math::IsCirclesCollide(Position2D circle1Position, float circle1Radius, Position2D circle2Position, float circle2Radius)
+	bool Math::IsCirclesCollide(Vector2D circle1Position, float circle1Radius, Vector2D circle2Position, float circle2Radius)
 	{
 		float squareDistance = (circle1Position.x - circle2Position.x) *
 			(circle1Position.x - circle2Position.x) +
@@ -55,7 +55,7 @@ namespace Arkanoid
 		return squareDistance <= squareRadiusSum;
 	}
 	//------------------------------------------------------------------------------------------------------------
-	bool Math::IsCicleRectangleCollition(Position2D circlePosition, float circleRadius, Position2D rectPosition, Position2D rectSize)
+	bool Math::IsCicleRectangleCollition(Vector2D circlePosition, float circleRadius, Vector2D rectPosition, Vector2D rectSize)
 	{
 		float closestPointX = GetNearest(circlePosition.x, rectPosition.x - rectSize.x * 0.5f, rectPosition.x + rectSize.x * 0.5f);
 		float closestPointY = GetNearest(circlePosition.y, rectPosition.y - rectSize.y * 0.5f, rectPosition.y + rectSize.y * 0.5f);
@@ -66,17 +66,48 @@ namespace Arkanoid
 		return distanceSquered <= (circleRadius * circleRadius);
 	}
 	//------------------------------------------------------------------------------------------------------------
-	Position2D Math::CalculateReboundSpeedByBase(float pointPosition, float pointSpeed, float basePosition, float baseSize, float maxReboundAngle)
+	Vector2D Math::CalculateReboundSpeedByRectangle(Vector2D ciclePosition, float circleSize, Vector2D cicleSpeed, Vector2D rectPosition, Vector2D rectSize, float maxReboundAngle)
 	{
 		const float normal_angle = 90.0f;
-		float relativeXPosition = 0.0f;
 		float normalizeXPosition = 0.0f;
 		float reboundAngle = 0.0f;
+		float speedMagnitude = 0.0f;
+		Vector2D newDirection;
 
-		relativeXPosition =  pointPosition - basePosition;
-		normalizeXPosition = relativeXPosition / baseSize * 0.5f;
-		reboundAngle = normalizeXPosition * maxReboundAngle * 3.14f / 180.0f;
+		Vector2D delta = {
+			ciclePosition.x - rectPosition.x,
+			ciclePosition.y - rectPosition.y
+		};
+		Vector2D halfRectSize = { rectSize.x / 2.0f, rectSize.y / 2.0f };
 
-		return Position2D({ sin(reboundAngle) * pointSpeed, -cos(reboundAngle) * pointSpeed } );
+		float overlapX = halfRectSize.x + circleSize - std::abs(delta.x);
+		float overlapY = halfRectSize.y + circleSize - std::abs(delta.y);
+
+		if (overlapX <= 0 || overlapY <= 0) {
+			return cicleSpeed; 
+		}
+
+		if (overlapX < overlapY) {
+
+			return Vector2D({ cicleSpeed.x * (-1.0f), cicleSpeed.y });
+		}
+		else {
+			
+			normalizeXPosition = delta.x / halfRectSize.x * 0.5f;
+			reboundAngle = normalizeXPosition * maxReboundAngle * 3.14159f / 180.0f;
+
+			if (cicleSpeed.y > 0.0f) 
+			{
+				newDirection = Vector2D({ sin(reboundAngle), -cos(reboundAngle) });
+			}
+			else {
+				newDirection = Vector2D({ sin(reboundAngle), cos(reboundAngle) });
+			}
+
+			speedMagnitude = std::sqrt(cicleSpeed.x * cicleSpeed.x + cicleSpeed.y * cicleSpeed.y);
+
+			return Vector2D({ newDirection.x * speedMagnitude, newDirection.y * speedMagnitude });
+		}
 	}
-}
+};
+

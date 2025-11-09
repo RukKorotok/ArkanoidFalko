@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "Menu.h"
 #include <bitset>
 
 
@@ -25,6 +26,11 @@ namespace Arkanoid
 			m_menu = UI::GetInstance().CreateMenu("GameOverMenu");
 			break;
 		}
+		case State::Win:
+		{
+			m_menu = UI::GetInstance().CreateMenu("WinMenu");
+			break;
+		}
 		}
 		m_state = state;
 		m_score = score;
@@ -46,6 +52,12 @@ namespace Arkanoid
 	{
 		return m_state;
 	}
+	//-----------------------------------------------------------------------------------------------------------
+	void GameState::AddScore(int score)
+	{
+		m_score = m_score + score;
+	}
+	//-----------------------------------------------------------------------------------------------------------
 	void GameState::SetScore(int score)
 	{
 		m_score = score;
@@ -59,22 +71,32 @@ namespace Arkanoid
 	//-----------------------------------------------------------------------------------------------------------
 	GameStateInRuntime::GameStateInRuntime(State state, int score) : GameState(state, score)
 	{
-		m_ball = new Ball();
+		Vector2D ballSize = { BALL_SIZE, BALL_SIZE };
+		Vector2D ballPosition = { SCREEN_WIDTH * 0.5f, SCREEN_HEIGHT * 0.5f };
+		Vector2D ballDirection = { 0.0f, -1.0f };
+		LoadLevel(Game::GetInstance().GetLevelPath(0));
 		m_base = new Base();
+		AddPrimaryBall(ballSize, ballPosition, ballDirection);
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	GameStateInRuntime::~GameStateInRuntime()
 	{
-		delete m_ball;
+		m_primaryBalls.clear();
 		delete m_base;
+		m_additionalBalls.clear();
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	void GameStateInRuntime::UpdateGame(sf::RenderWindow& window, float deltaTime)
 	{
 		window.clear();
-		CheckBallCollitions();
-		m_ball->UpdateBall(deltaTime);
-		m_ball->DrawBall(window);
+		for (const auto block : m_blocks)
+		{
+			block->Visualize(window);
+		}
+		for (const auto ball : m_primaryBalls)
+		{
+			ball->UpdateBall(deltaTime, window);
+		}
 		m_base->DrawBase(window);
 		UI::GetInstance().DrawGameUI(Game::GetInstance(), window);
 		window.display();
@@ -85,17 +107,128 @@ namespace Arkanoid
 		m_base->UpdateBase(position);
 	}
 	//------------------------------------------------------------------------------------------------------------
-	void GameStateInRuntime::CheckBallCollitions()
+	void GameStateInRuntime::AddPrimaryBall(Vector2D ballSize, Vector2D ballPosition, Vector2D ballDirection)
 	{
-		Position2D ballPosition = m_ball->GetPosition();
-		Position2D basePosition = m_base->GetPosition();
-		Position2D baseSize = m_base->GetBaseSize();
-
-		if (Math::GetInstance().IsCicleRectangleCollition(ballPosition, BALL_SIZE * 0.5f, basePosition, baseSize))
+		m_primaryBalls.push_back(std::make_shared<MainBall>(ballSize, ballPosition, ballDirection));
+	}
+	//------------------------------------------------------------------------------------------------------------
+	void GameStateInRuntime::RemoveObject(GameObject& object)
+	{
+		int i = 0;
+		GameObject* objectAdress = &object;
+		for (i = 0; i < m_additionalBalls.size(); i++)
 		{
-			m_ball->SetVectorSpeed(Math::GetInstance().CalculateReboundSpeedByBase(ballPosition.x, INITIAL_BALL_SPEED, basePosition.x, baseSize.x, BASE_REBOUND_MAX_ANGLE) );
-			m_ball->SetPosition({ ballPosition.x, basePosition.y - (BALL_SIZE * 0.5f + BASE_SEGMENT_SIZE) } );
+			if (m_additionalBalls[i].get() == objectAdress)
+			{
+				m_additionalBalls.erase(m_additionalBalls.begin() + i);
+				return;
+			}
 		}
+
+		for (i = 0; i < m_primaryBalls.size(); i++)
+		{
+			if (m_primaryBalls[i].get() == objectAdress)
+			{
+				m_primaryBalls.erase(m_primaryBalls.begin() + i);
+
+				if (m_primaryBalls.empty())
+				{
+					Game::GetInstance().AddGameState(GameOver, Game::GetInstance().GetCurrentGameState()->GetScore());
+				}
+				return;
+			}
+		}
+
+		for (i = 0; i < m_blocks.size(); i++)
+		{
+			if (m_blocks[i].get() == objectAdress)
+			{
+				m_blocks.erase(m_blocks.begin() + i);
+
+				if (m_blocks.empty())
+				{
+					Game::GetInstance().AddGameState(Win, Game::GetInstance().GetCurrentGameState()->GetScore());
+				}
+				return;
+			}
+		}
+	}
+	//------------------------------------------------------------------------------------------------------------
+	void GameStateInRuntime::AddAdditionalBall(std::shared_ptr<Ball> ball)
+	{
+		m_additionalBalls.push_back(ball);
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void GameStateInRuntime::SetPoison()
+	{
+		m_isPoisoned = true;
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void GameStateInRuntime::SetDesorient()
+	{
+		m_isDisoriented = true;
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	Base* GameStateInRuntime::GetBase()
+	{
+		return m_base;
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	std::vector<std::shared_ptr<Block>> GameStateInRuntime::GetBlocks()
+	{
+		return m_blocks;
+	}
+	//------------------------------------------------------------------------------------------------------------
+	void GameStateInRuntime::LoadLevel(const std::string& fileName)
+	{
+		const Vector2D size = { BASE_SEGMENT_SIZE * 2, BASE_SEGMENT_SIZE };
+		std::ifstream file(fileName);
+		std::string line;
+		int row = 0;
+		Vector2D position;
+		char symbol;
+
+		//Open file
+		if (!file.is_open())
+		{
+			std::cerr << "Error, not open level: " << fileName << std::endl;
+			return;
+		}
+		//Get line
+		while (std::getline(file, line))
+		{
+			for (int c = 0; c < line.length(); c++)
+			{
+				symbol = line[c];
+				//Check symbols
+				if (symbol != '#')
+				{
+					position = { c * BASE_SEGMENT_SIZE * 2 + BASE_SEGMENT_SIZE, row * BASE_SEGMENT_SIZE + BASE_SEGMENT_SIZE * 0.5f };
+
+					if (symbol == '1')
+					{
+						m_blocks.emplace_back(std::make_shared <Block>(1, size, position));
+					}
+				}
+			}
+			row++;
+		}
+		// Close file
+		file.close();
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void GameStateInRuntime::RemoveObjectByAdress(std::vector<std::shared_ptr<GameObject>> objects, GameObject& adress)
+	{
+		int i = 0;
+		for (i = 0; i < objects.size(); i++)
+		{
+			if (objects[i].get() == &adress)
+			{
+				objects.erase(objects.begin() + i);
+				return;
+			}
+		}
+
 	}
 	//Game
 	//-----------------------------------------------------------------------------------------------------------
@@ -157,22 +290,6 @@ namespace Arkanoid
 		AddGameState(State::Main, 0);
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	Game::Game()
-	{
-		AddGameState(State::Main, 0);
-	}
-	std::shared_ptr<GameState> Game::CreateGameState(State state, int score)
-	{
-		if (state == State::GameInProgress)
-		{
-			return std::make_shared<GameStateInRuntime>(state, score);
-		}
-		else
-		{
-			return std::make_shared<GameState>(state, score);
-		}
-	}
-	//-----------------------------------------------------------------------------------------------------------
 	std::vector<std::shared_ptr<RecordItem>> Game::ReadRecordsList()
 	{
 		std::string name = "";
@@ -198,7 +315,7 @@ namespace Arkanoid
 		{
 			for (const auto& entry : recordList) 
 			{
-				file << entry->GetName() << " " << entry->GetName() << std::endl;
+				file << entry->GetString() << " " << entry->GetString() << std::endl;
 			}
 			file.close();
 		}
@@ -246,5 +363,58 @@ namespace Arkanoid
 	sf::RenderWindow* Game::GetWindow()
 	{
 		return m_window;
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	std::string Game::GetLevelPath(int index)
+	{
+		if (m_levelsPaths.size() > index)
+		{
+			return m_levelsPaths[index];
+		}
+		std::cerr << "Level not found: " << m_LEVELS_PATH << std::endl;
+		return "";
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	Game::Game()
+	{
+		//Find all paths for levels files
+		try
+		{
+			std::filesystem::path folderPath(m_LEVELS_PATH);
+
+			if (std::filesystem::exists(folderPath) && std::filesystem::is_directory(folderPath))
+			{
+				for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(folderPath))
+				{
+					if (std::filesystem::is_regular_file(entry.status()))
+					{
+						// Added path in paths list
+						m_levelsPaths.push_back(entry.path().string());
+					}
+				}
+			}
+			else
+			{
+				std::cerr << "Folder not found: " << m_LEVELS_PATH << std::endl;
+			}
+		}
+		catch (const std::filesystem::filesystem_error& error)
+		{
+			std::cerr << "File system error: " << error.what() << std::endl;
+		}
+		//Create main menu
+		AddGameState(State::Main, 0);
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	std::shared_ptr<GameState> Game::CreateGameState(State state, int score)
+	{
+		if (state == State::GameInProgress)
+		{
+			return std::make_shared<GameStateInRuntime>(state, score);
+		}
+		else
+		{
+			return std::make_shared<GameState>(state, score);
+		}
 	}
 }

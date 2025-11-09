@@ -3,9 +3,10 @@
 #include <iostream>
 #include <unordered_map>
 #include <memory>
-#include <fstream>
 #include <algorithm>
 #include <vector>
+#include <filesystem>
+#include <fstream>
 #include "SFML/Audio.hpp"
 #include "Config.h"
 #include "Math.h"
@@ -13,13 +14,13 @@
 #include "Base.h"
 #include "Ball.h"
 #include "Block.h"
-#include "Rock.h"
 #include "Sound.h"
 #include "InputHandlers.h"
+#include "Objects.h"
 
 namespace Arkanoid
 {
-	class Game;
+	class RecordItem;
 
 	class GameState
 	{
@@ -30,6 +31,7 @@ namespace Arkanoid
 		virtual void UpdateGame(sf::RenderWindow& window, float deltaTime);
 		virtual void RefreshMousePosition(float position) {}
 		State GetState();
+		void AddScore(int score);
 		void SetScore(int score);
 		int GetScore();
 
@@ -48,13 +50,25 @@ namespace Arkanoid
 
 		void UpdateGame(sf::RenderWindow& window, float deltaTime) override;
 		void RefreshMousePosition(float position) override;
+		void AddPrimaryBall(Vector2D ballSize, Vector2D ballPosition, Vector2D ballDirection);
+		void RemoveObject(GameObject& object);
+		void AddAdditionalBall(std::shared_ptr<Ball> ball);
+		void RemoveAdditionalBall(Ball& ball);
+		void SetPoison();
+		void SetDesorient();
+		Base* GetBase();
+		std::vector<std::shared_ptr<Block>> GetBlocks();
 
 	private:
 
-		void CheckBallCollitions();
-
+		void LoadLevel(const std::string& fileName);
+		void RemoveObjectByAdress(std::vector<std::shared_ptr<GameObject>> objects, GameObject& adress);
 		Base* m_base = nullptr;
-		Ball* m_ball = nullptr;
+		std::vector<std::shared_ptr<MainBall>> m_primaryBalls;
+		std::vector<std::shared_ptr<Ball>> m_additionalBalls;
+		std::vector<std::shared_ptr<Block>> m_blocks;
+		bool m_isPoisoned = false;
+		bool m_isDisoriented = false;
 	};
 
 
@@ -82,13 +96,19 @@ namespace Arkanoid
 		void AddRecordScore(const std::string& name, int newScore);
 		void SetWindowRef(sf::RenderWindow* window);
 		sf::RenderWindow* GetWindow();
+		std::string GetLevelPath(int index);
+
 	private:
+
 		Game();
 		~Game() {}
 
 		Game(Game const&) = delete;
 		Game& operator = (Game const&) = delete;
 		static std::shared_ptr<GameState> CreateGameState(State state, int score);
+
+		std::string m_LEVELS_PATH = "../Levels";
+		std::vector<std::string> m_levelsPaths;
 		DifficultyLevel m_difficulty;
 		uint32_t m_settings;
 		std::vector<std::shared_ptr<GameState>> m_gameStates;

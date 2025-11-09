@@ -124,6 +124,7 @@
       <PreprocessorDefinitions>SFML_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)\SFML\SFML-2.5.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -162,13 +163,15 @@
     <ClCompile Include="Block.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameMain.cpp" />
-    <ClCompile Include="GridManager.cpp" />
     <ClCompile Include="ini.c" />
     <ClCompile Include="INIReader.cpp" />
     <ClCompile Include="InputHandlers.cpp" />
     <ClCompile Include="Math.cpp" />
     <ClCompile Include="Base.cpp" />
-    <ClCompile Include="Rock.cpp" />
+    <ClCompile Include="Menu.cpp" />
+    <ClCompile Include="Objects.cpp">
+      <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp17</LanguageStandard>
+    </ClCompile>
     <ClCompile Include="Sound.cpp" />
     <ClCompile Include="UI.cpp" />
   </ItemGroup>
@@ -177,13 +180,14 @@
     <ClInclude Include="Block.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Game.h" />
-    <ClInclude Include="GridManager.h" />
     <ClInclude Include="ini.h" />
     <ClInclude Include="INIReader.h" />
     <ClInclude Include="InputHandlers.h" />
+    <ClInclude Include="Interfaces.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Base.h" />
-    <ClInclude Include="Rock.h" />
+    <ClInclude Include="Menu.h" />
+    <ClInclude Include="Objects.h" />
     <ClInclude Include="Sound.h" />
     <ClInclude Include="UI.h" />
   </ItemGroup>

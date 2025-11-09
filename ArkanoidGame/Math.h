@@ -8,7 +8,7 @@ namespace sf
 namespace Arkanoid
 {
 
-	struct Position2D
+	struct Vector2D
 	{
 		float x = 0;
 		float y = 0;
@@ -27,10 +27,10 @@ namespace Arkanoid
 		float GetNearest(float origin, float min, float max);
 		void SetSpriteSize(sf::Sprite& sprite, float desiredWidth, float desiredHeight);
 		void SetSpriteRelativeOrigin(sf::Sprite& sprite, float originX, float originY);
-		bool IsRectanglesCollide(Position2D rect1Position, Position2D rect1Size, Position2D rect2Position, Position2D rect2Size);
-		bool IsCirclesCollide(Position2D circle1Position, float circle1Radius, Position2D circle2Position, float circle2Radius);
-		bool IsCicleRectangleCollition(Position2D circlePosition, float circleRadius, Position2D rectPosition, Position2D rectSize);
-		Position2D CalculateReboundSpeedByBase(float pointPosition, float pointSpeed, float basePosition, float baseSize, float maxReboundAngle);
+		bool IsRectanglesCollide(Vector2D rect1Position, Vector2D rect1Size, Vector2D rect2Position, Vector2D rect2Size);
+		bool IsCirclesCollide(Vector2D circle1Position, float circle1Radius, Vector2D circle2Position, float circle2Radius);
+		bool IsCicleRectangleCollition(Vector2D circlePosition, float circleRadius, Vector2D rectPosition, Vector2D rectSize);
+		Vector2D CalculateReboundSpeedByRectangle(Vector2D ciclePosition, float circleSize, Vector2D cicleSpeed, Vector2D rectPosition, Vector2D rectSize, float maxReboundAngle);
 
 	private:
 

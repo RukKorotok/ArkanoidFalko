@@ -4,29 +4,19 @@
 namespace Arkanoid
 {
 	//-----------------------------------------------------------------------------------------------------------
-	BaseSegment::BaseSegment(int index, bool edge)
+	BaseSegment::BaseSegment(int index, bool edge) : 
+		GameObject(edge == true ? RESOURCES_PATH + "PlatformEdge.png" : RESOURCES_PATH + "PlatformMiddle.png", { BASE_SEGMENT_SIZE, BASE_SEGMENT_SIZE }, { 0.0f, 0.0f })
 	{
-		if (edge)
-		{
-			assert(m_segmentTexture.loadFromFile(RESOURCES_PATH + "PlatformEdge.png"));
-		}
-		else
-		{
-			assert(m_segmentTexture.loadFromFile(RESOURCES_PATH + "PlatformMiddle.png"));
-		}
-		m_sprite.setTexture(m_segmentTexture);
 		if (index < 0)
 		{
 			Math::GetInstance().SetSpriteSize(m_sprite, BASE_SEGMENT_SIZE, BASE_SEGMENT_SIZE);
 		}
 		else
 		{
-			Math::GetInstance().SetSpriteSize(m_sprite, BASE_SEGMENT_SIZE * -1, BASE_SEGMENT_SIZE);
+			Math::GetInstance().SetSpriteSize(m_sprite, BASE_SEGMENT_SIZE * (- 1), BASE_SEGMENT_SIZE);
 		}
-		Math::GetInstance().SetSpriteRelativeOrigin(m_sprite, 0.5f, 0.5f);
-		m_position = { SCREEN_WIDTH * 0.5f + float(index) * BASE_SEGMENT_SIZE, SCREEN_HEIGHT - m_Y_POSITION_OFFSET };
-		m_sprite.setPosition(m_position.x, m_position.y);
 		m_index = index;
+		SetPosition(SCREEN_WIDTH * 0.5f);
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	int BaseSegment::GetIndex()
@@ -36,32 +26,13 @@ namespace Arkanoid
 	//-----------------------------------------------------------------------------------------------------------
 	void BaseSegment::SetPosition(float xPos)
 	{
-		m_position = { xPos + float(m_index) * BASE_SEGMENT_SIZE, m_position.y };
+		m_position = { xPos + float(m_index) * BASE_SEGMENT_SIZE, SCREEN_HEIGHT - m_Y_POSITION_OFFSET };
 		m_sprite.setPosition(m_position.x, m_position.y);
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	Position2D BaseSegment::GetPosition()
-	{
-		return m_position;
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	sf::Sprite BaseSegment::GetSprite()
-	{
-		return m_sprite;
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	void BaseSegment::SetColor(sf::Color color)
-	{
-		m_sprite.setColor(color);
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	void BaseSegment::DrawSegment(sf::RenderWindow& window)
-	{
-		window.draw(m_sprite);
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	Base::Base()
 	{
+		//Hard code !!!!!!!!!!!!!!!!!!
 		BaseSegment* currentSegment;
 		sf::Vector2f location;
 		currentSegment = new BaseSegment(0, false);
@@ -100,12 +71,12 @@ namespace Arkanoid
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	Position2D Base::GetPosition()
+	Vector2D Base::GetPosition()
 	{
 		return m_segments[0]->GetPosition();
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	Position2D Base::GetBaseSize()
+	Vector2D Base::GetSize()
 	{
 		return { BASE_SEGMENT_SIZE * m_segments.size(), BASE_SEGMENT_SIZE };
 	}
@@ -114,7 +85,7 @@ namespace Arkanoid
 	{
 		for (BaseSegment* currentSegment : m_segments)
 		{
-			currentSegment->DrawSegment(window);
+			currentSegment->Visualize(window);
 		}
 	}
 }

@@ -1,35 +1,70 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include "GridManager.h"
 #include "Config.h"
 #include "Math.h"
+#include "Objects.h"
+#include "Interfaces.h"
 
 namespace Arkanoid
 {
-	class Ball
+	class GameObject;
+
+	class Ball : public GameObject, public Collidable
+
 	{
 	public:
 
-		Ball();
+		Ball(Vector2D size, Vector2D position, Vector2D vectorSpeed);
 		~Ball() {}
+		virtual void UpdateBall(float deltaTime, sf::RenderWindow& window);
+		void OnHit() override {}
+	protected:
 
-		void UpdateBall(float deltaTime);
-		void SetPosition(Position2D position);
-		Position2D GetPosition();
-		void SetVectorSpeed(Position2D vectorSpeed);
-		void DrawBall(sf::RenderWindow& window);
+		virtual void CheckCollisions() {};
+		void UpdateBallPosition(float deltaTime);
+
+		float m_scalarSpeed = 0.0f;
+		Vector2D m_vectorSpeed = { 100.0f, 100.0f };
+	};
+
+	class MainBall final : public Ball
+
+	{
+	public:
+
+		MainBall(Vector2D size, Vector2D position, Vector2D vectorSpeed);
+		~MainBall() {}
+
+		void UpdateBall(float deltaTime, sf::RenderWindow& window) override;
+		void SetPosition(Vector2D position);
+		void SetVectorSpeed(Vector2D vectorSpeed);
+		void OnHit() override {}
 
 	private:
 
-		void UpdataBallDirection();
-		void UpdateBallPosition(float deltaTime);
-
-		Position2D m_position;
-		float m_scalarSpeed = 0.0f;
-		Position2D m_ballVectorSpeed = { 100.0f, 100.0f };
+		void CheckCollisions() override;
 		float m_currentAngle = 0.0f;
-
-		sf::Texture m_ballTexture;
-		sf::Sprite m_sprite;
 	};
+
+	class PoisonBall final : public Ball
+
+	{
+	public:
+
+		PoisonBall(Vector2D size, Vector2D position, Vector2D vectorSpeed);
+		~PoisonBall() {}
+		void OnHit() override;
+	};
+
+	class DesorientBall final : public Ball
+
+	{
+	public:
+
+		DesorientBall(Vector2D size, Vector2D position, Vector2D vectorSpeed);
+		~DesorientBall() {}
+		void OnHit() override;
+	};
+
+
 }

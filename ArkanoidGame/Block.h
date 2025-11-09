@@ -1,14 +1,22 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include "GridManager.h"
 #include "Config.h"
+#include "Objects.h"
 #include "Math.h"
+#include "Interfaces.h"
 
-//For next rev
 namespace Arkanoid
 {
 	class Game;
 
+	enum BlockType
+	{
+		Normal = 0,
+		ScoreUp,
+		Poison,
+		Disorient,
+		Wall
+	};
 	enum BlockDamage
 	{
 		Clear = 0,
@@ -16,24 +24,57 @@ namespace Arkanoid
 		Broken
 	};
 
-	class Block
+	class Block : public GameObject, public Collidable
 	{
 	public:
 
-		Block(IndexEvents type, int index);
+		Block(int health, Vector2D size, Vector2D position);
+		void Visualize(sf::RenderWindow& window) override;
+		void OnHit() override;
 
-		bool HitBlock(Game& game, int appleIndex);
-		void Draw(sf::RenderWindow& window);
-	private:
+	protected:
 
-		sf::Texture m_frameClearTexture;
+		virtual void DestroyAction();
+
 		sf::Texture m_frameCrackTexture;
 		sf::Texture m_frameBrokenTexture;
 		sf::RectangleShape m_blockShape;
-		int m_index = 0;
-		sf::Sprite m_frameSprite;
 		sf::Color m_color = sf::Color::White;
-		IndexEvents m_type = IndexEvents::Normal;
-		int m_health = 1;
+		int m_maxHealth = 1;
+		int m_currentHealth = 1;
 	};
+
+	class BlockScoreUp final : public Block 
+	{
+	public:
+
+		BlockScoreUp(int health, Vector2D size, Vector2D position);
+
+	private:
+		void OnHit() override { Block::OnHit(); }
+		void DestroyAction() override;
+	};
+
+	class PoisonBlock final  : public Block
+	{
+	public:
+
+		PoisonBlock(int health, Vector2D size, Vector2D position);
+
+	private:
+		void OnHit() override { Block::OnHit(); }
+		void DestroyAction() override;
+	};
+
+	class DisorientBlock final : public Block
+	{
+	public:
+
+		DisorientBlock(int health, Vector2D size, Vector2D position);
+
+	private:
+		void OnHit() override { Block::OnHit(); }
+		void DestroyAction() override;
+	};
+
 }

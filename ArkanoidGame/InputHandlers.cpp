@@ -1,4 +1,5 @@
 #include "InputHandlers.h"
+#include "Menu.h"
 #include "Game.h"
 
 namespace Arkanoid
