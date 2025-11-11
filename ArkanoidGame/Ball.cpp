@@ -12,6 +12,7 @@ namespace Arkanoid
 	//------------------------------------------------------------------------------------------------------------
 	void Ball::UpdateBall(float deltaTime, sf::RenderWindow& window)
 	{
+		CheckCollisions();
 		UpdateBallPosition(deltaTime);
 		Draw(window);
 	}
@@ -27,7 +28,6 @@ namespace Arkanoid
 	//------------------------------------------------------------------------------------------------------------
 	void MainBall::UpdateBall(float deltaTime, sf::RenderWindow& window)
 	{
-		CheckCollisions();
 		Ball::UpdateBall(deltaTime, window);
 	}
 	//------------------------------------------------------------------------------------------------------------
@@ -43,42 +43,51 @@ namespace Arkanoid
 	//------------------------------------------------------------------------------------------------------------
 	void MainBall::CheckCollisions()
 	{
-		GameStateInRuntime* gameState = static_cast<GameStateInRuntime*>(Game::GetInstance().GetCurrentGameState().get());
-		std::vector<std::shared_ptr<Block>> blocks = gameState->GetBlocks();
-		Base* base = gameState->GetBase();
-
-		for (const auto block : blocks)
+		GameStateInRuntime* gameState = Game::GetInstance().GetRuntimeGameState().get();
+		if (gameState)
 		{
-			if (Math::GetInstance().IsCicleRectangleCollition(m_position, m_size.x * 0.5f, block->GetPosition(), block->GetSize()))
+			std::vector<std::shared_ptr<Block>> blocks = gameState->GetBlocks();
+			Base* base = gameState->GetBase();
+
+			for (const auto block : blocks)			{
+				if (Math::GetInstance().IsCicleRectangleCollition(m_position, m_size.x * 0.5f, block->GetPosition(), block->GetSize()))
+				{
+					SetVectorSpeed(Math::GetInstance().CalculateReboundSpeedByRectangle(m_position, m_size.x * 0.5f, m_vectorSpeed, block->GetPosition(), block->GetSize(), BASE_REBOUND_MAX_ANGLE));
+					UpdateBallPosition(0.005f);
+					OnHit();
+					block->OnHit();
+					return;
+				}
+			}
+
+			if (Math::GetInstance().IsCicleRectangleCollition(m_position, m_size.x * 0.5f, base->GetPosition(), base->GetSize()))
 			{
-				SetVectorSpeed(Math::GetInstance().CalculateReboundSpeedByRectangle(m_position, m_size.x * 0.5f, m_vectorSpeed, block->GetPosition(), block->GetSize(), BASE_REBOUND_MAX_ANGLE));
+				SetVectorSpeed(Math::GetInstance().CalculateReboundSpeedByRectangle(m_position, m_size.x * 0.5f, m_vectorSpeed, base->GetPosition(), base->GetSize(), BASE_REBOUND_MAX_ANGLE));
 				UpdateBallPosition(0.015f);
-				OnHit();
-				block->OnHit();
 				return;
 			}
-		}
 
-		if (Math::GetInstance().IsCicleRectangleCollition(m_position, m_size.x * 0.5f, base->GetPosition(), base->GetSize()))
-		{
-			SetVectorSpeed(Math::GetInstance().CalculateReboundSpeedByRectangle(m_position, m_size.x * 0.5f, m_vectorSpeed, base->GetPosition(), base->GetSize(), BASE_REBOUND_MAX_ANGLE));
-			UpdateBallPosition(0.015f);
+			if (m_position.x - BALL_SIZE * 0.5f <= 0)
+			{
+				m_vectorSpeed = { abs(m_vectorSpeed.x),  m_vectorSpeed.y };
+			}
+			else if (m_position.x + BALL_SIZE * 0.5f >= SCREEN_WIDTH)
+			{
+				m_vectorSpeed.x = abs(m_vectorSpeed.x);
+				m_vectorSpeed = { m_vectorSpeed.x * (-1.0f),  m_vectorSpeed.y};
+			}
+			else if (m_position.y - BALL_SIZE * 0.5f <= 0)
+			{
+				m_vectorSpeed = { m_vectorSpeed.x, abs(m_vectorSpeed.y) };
+			}
+			else if (m_position.y >= SCREEN_HEIGHT)
+			{
+				gameState->RemoveObject(*this);
+			}
 		}
-
-		if (m_position.x <= 0 || m_position.x >= SCREEN_WIDTH)
+		else
 		{
-			m_vectorSpeed = { -1.0f * m_vectorSpeed.x,  m_vectorSpeed.y };
-			UpdateBallPosition(0.05f);
-		}
-		else if (m_position.y <= 0)
-		{
-			m_vectorSpeed = { m_vectorSpeed.x,  -1.0f * m_vectorSpeed.y };
-			UpdateBallPosition(0.05f);
-		}
-		else if (m_position.y >= SCREEN_HEIGHT)
-		{
-			GameStateInRuntime* RuntimeGameState = static_cast<GameStateInRuntime*>(Game::GetInstance().GetCurrentGameState().get());
-			RuntimeGameState->RemoveObject(*this);
+			std::cerr << "GameStateRunTimeNotValid: "  << std::endl;
 		}
 	}
 	//PoisonBall
@@ -90,9 +99,42 @@ namespace Arkanoid
 	//------------------------------------------------------------------------------------------------------------
 	void PoisonBall::OnHit()
 	{
-		GameStateInRuntime* RuntimeGameState = static_cast<GameStateInRuntime*>(Game::GetInstance().GetCurrentGameState().get());
-		RuntimeGameState->RemoveObject(*this);
-		RuntimeGameState->SetPoison();
+		GameStateInRuntime* gameState = Game::GetInstance().GetRuntimeGameState().get();
+		if (gameState)
+		{
+			gameState->RemoveObject(*this);
+			gameState->SetPoison();
+		}
+		else
+		{
+			std::cerr << "GameStateRunTimeNotValid: " << std::endl;
+		}
+	}
+	//------------------------------------------------------------------------------------------------------------
+	void PoisonBall::CheckCollisions()
+	{
+		GameStateInRuntime* gameState = Game::GetInstance().GetRuntimeGameState().get();
+
+		if (gameState)
+		{
+			Base* base = gameState->GetBase();
+
+			if (Math::GetInstance().IsCicleRectangleCollition(m_position, m_size.x * 0.5f, base->GetPosition(), base->GetSize()))
+			{
+				OnHit();
+				base->OnHit();
+			}
+
+			if (m_position.x <= 0 || m_position.x >= SCREEN_WIDTH
+				|| m_position.y <= 0 || m_position.y >= SCREEN_HEIGHT)
+			{
+				gameState->RemoveObject(*this);
+			}
+		}
+		else
+		{
+			std::cerr << "GameStateRunTimeNotValid: " << std::endl;
+		}
 	}
 	//DesorientBall
 	//------------------------------------------------------------------------------------------------------------
@@ -103,8 +145,16 @@ namespace Arkanoid
 	//------------------------------------------------------------------------------------------------------------
 	void DesorientBall::OnHit()
 	{
-		GameStateInRuntime* RuntimeGameState = static_cast<GameStateInRuntime*>(Game::GetInstance().GetCurrentGameState().get());
-		RuntimeGameState->RemoveObject(*this);
-		RuntimeGameState->SetDesorient();
+		GameStateInRuntime* gameState = Game::GetInstance().GetRuntimeGameState().get();
+
+		if (gameState)
+		{
+			gameState->RemoveObject(*this);
+			gameState->SetDesorient();
+		}
+		else
+		{
+			std::cerr << "GameStateRunTimeNotValid: " << std::endl;
+		}
 	}
 }

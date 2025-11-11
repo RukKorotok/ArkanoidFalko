@@ -29,7 +29,7 @@ namespace Arkanoid
 	{
 		float shapeSize = shapeSizeX * sizeMulty;
 
-		shape.setOrigin(shapeSizeX * 0.5f, shapeSizeY * 0.5f);
+		shape.setOrigin(shapeSizeX * 0.45f, shapeSizeY * 0.45f);
 		shape.setSize({ shapeSizeX * sizeMulty, shapeSizeY * sizeMulty });
 		shape.setPosition(height, width);
 		shape.setFillColor(color);

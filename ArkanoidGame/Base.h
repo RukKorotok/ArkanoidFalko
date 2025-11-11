@@ -4,7 +4,7 @@
 
 namespace Arkanoid
 {
-	class BaseSegment : public GameObject, public Collidable
+	class BaseSegment : public GameObject
 	{
 
 	public:
@@ -13,7 +13,6 @@ namespace Arkanoid
 		int GetIndex();
 		void SetPosition(float xPos);
 		void SetColor(sf::Color color);
-		void OnHit() override {}
 
 	private:
 		const float m_Y_POSITION_OFFSET = 50.0f;
@@ -21,7 +20,7 @@ namespace Arkanoid
 		int m_index = 0;
 	};
 
-	class Base
+	class Base : public Collidable
 	{
 	public:
 
@@ -33,13 +32,16 @@ namespace Arkanoid
 		Vector2D GetPosition();
 		Vector2D GetSize();
 		void DrawBase(sf::RenderWindow& window);
+		void OnHit() override;
 
 	private:
 
 		const int m_START_SIZE = 3;
 
 		std::vector<BaseSegment*> m_segments;
-		bool m_isNormalOrientation = true;
+
+		bool m_isPoisoned = false;
+		bool m_isDisorient = false;
 		int m_toEndDobleSpeedSteps = 0;
 		int m_toEndDisorientationSteps = 0;
 		float m_xPosition = 0;

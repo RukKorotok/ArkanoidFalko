@@ -55,9 +55,12 @@ namespace Arkanoid
 		void AddAdditionalBall(std::shared_ptr<Ball> ball);
 		void RemoveAdditionalBall(Ball& ball);
 		void SetPoison();
+		bool GetPoison();
 		void SetDesorient();
+		bool GetDesorient();
 		Base* GetBase();
 		std::vector<std::shared_ptr<Block>> GetBlocks();
+		void SubtractBlockCount();
 
 	private:
 
@@ -66,9 +69,10 @@ namespace Arkanoid
 		Base* m_base = nullptr;
 		std::vector<std::shared_ptr<MainBall>> m_primaryBalls;
 		std::vector<std::shared_ptr<Ball>> m_additionalBalls;
-		std::vector<std::shared_ptr<Block>> m_blocks;
+		std::vector<std::shared_ptr<Block>> m_allBlocks;
 		bool m_isPoisoned = false;
 		bool m_isDisoriented = false;
+		int m_distBlocksCount = 0;
 	};
 
 
@@ -97,6 +101,7 @@ namespace Arkanoid
 		void SetWindowRef(sf::RenderWindow* window);
 		sf::RenderWindow* GetWindow();
 		std::string GetLevelPath(int index);
+		std::shared_ptr<GameStateInRuntime> GetRuntimeGameState();
 
 	private:
 
@@ -105,13 +110,14 @@ namespace Arkanoid
 
 		Game(Game const&) = delete;
 		Game& operator = (Game const&) = delete;
-		static std::shared_ptr<GameState> CreateGameState(State state, int score);
+		std::shared_ptr<GameState> CreateGameState(State state, int score);
 
 		std::string m_LEVELS_PATH = "../Levels";
 		std::vector<std::string> m_levelsPaths;
 		DifficultyLevel m_difficulty;
 		uint32_t m_settings;
 		std::vector<std::shared_ptr<GameState>> m_gameStates;
+		std::shared_ptr<GameStateInRuntime> m_runtimeGameState;
 		std::vector<std::shared_ptr<RecordItem>> m_recordList;
 		const int m_MAX_SCORE = 10;
 		sf::RenderWindow* m_window = nullptr;

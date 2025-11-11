@@ -83,13 +83,21 @@ namespace Arkanoid
 		float overlapX = halfRectSize.x + circleSize - std::abs(delta.x);
 		float overlapY = halfRectSize.y + circleSize - std::abs(delta.y);
 
-		if (overlapX <= 0 || overlapY <= 0) {
+		if (overlapX <= 0 || overlapY <= 0) 
+		{
 			return cicleSpeed; 
 		}
 
-		if (overlapX < overlapY) {
-
-			return Vector2D({ cicleSpeed.x * (-1.0f), cicleSpeed.y });
+		if (overlapX < overlapY) 
+		{
+			if (delta.x < 0.0f)
+			{
+				return Vector2D({ abs(cicleSpeed.x) * (-1.0f), cicleSpeed.y });
+			}
+			else
+			{
+				return Vector2D({ abs(cicleSpeed.x), cicleSpeed.y });
+			}
 		}
 		else {
 			

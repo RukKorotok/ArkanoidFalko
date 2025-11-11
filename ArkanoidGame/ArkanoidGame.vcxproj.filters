@@ -61,6 +61,9 @@
     <ClCompile Include="Menu.cpp">
       <Filter>Sources\GameObjects</Filter>
     </ClCompile>
+    <ClCompile Include="SmothTimer.cpp">
+      <Filter>Sources\InheritanceSource</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Config.h">
@@ -103,6 +106,9 @@
       <Filter>Sources\GameObjects</Filter>
     </ClInclude>
     <ClInclude Include="Interfaces.h">
+      <Filter>Sources\InheritanceSource</Filter>
+    </ClInclude>
+    <ClInclude Include="SmothTimer.h">
       <Filter>Sources\InheritanceSource</Filter>
     </ClInclude>
   </ItemGroup>

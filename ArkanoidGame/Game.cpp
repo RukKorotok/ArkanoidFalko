@@ -84,16 +84,27 @@ namespace Arkanoid
 		m_primaryBalls.clear();
 		delete m_base;
 		m_additionalBalls.clear();
+		m_allBlocks.clear();
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	void GameStateInRuntime::UpdateGame(sf::RenderWindow& window, float deltaTime)
 	{
 		window.clear();
-		for (const auto block : m_blocks)
+
+		for (const auto block : m_allBlocks)
 		{
-			block->Visualize(window);
+			if(block)
+			{
+				block->Visualize(window);
+				block->UpdateBlock(deltaTime);
+			}
 		}
 		for (const auto ball : m_primaryBalls)
+		{
+			ball->UpdateBall(deltaTime, window);
+		}
+
+		for (const auto ball : m_additionalBalls)
 		{
 			ball->UpdateBall(deltaTime, window);
 		}
@@ -139,17 +150,11 @@ namespace Arkanoid
 			}
 		}
 
-		for (i = 0; i < m_blocks.size(); i++)
+		for (i = 0; i < m_allBlocks.size(); i++)
 		{
-			if (m_blocks[i].get() == objectAdress)
+			if (m_allBlocks[i].get() == objectAdress)
 			{
-				m_blocks.erase(m_blocks.begin() + i);
-
-				if (m_blocks.empty())
-				{
-					Game::GetInstance().AddGameState(Win, Game::GetInstance().GetCurrentGameState()->GetScore());
-				}
-				return;
+				m_allBlocks.erase(m_allBlocks.begin() + i);
 			}
 		}
 	}
@@ -161,12 +166,22 @@ namespace Arkanoid
 	//-----------------------------------------------------------------------------------------------------------
 	void GameStateInRuntime::SetPoison()
 	{
-		m_isPoisoned = true;
+		m_isPoisoned = !m_isPoisoned;
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	bool GameStateInRuntime::GetPoison()
+	{
+		return m_isPoisoned;
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	void GameStateInRuntime::SetDesorient()
 	{
-		m_isDisoriented = true;
+		m_isDisoriented = !m_isDisoriented;
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	bool GameStateInRuntime::GetDesorient()
+	{
+		return m_isDisoriented;
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	Base* GameStateInRuntime::GetBase()
@@ -176,7 +191,15 @@ namespace Arkanoid
 	//-----------------------------------------------------------------------------------------------------------
 	std::vector<std::shared_ptr<Block>> GameStateInRuntime::GetBlocks()
 	{
-		return m_blocks;
+		return m_allBlocks;
+	}
+	void GameStateInRuntime::SubtractBlockCount()
+	{
+		m_distBlocksCount--;
+		if (m_distBlocksCount == 0)
+		{
+			Game::GetInstance().AddGameState(Win, m_score);
+		}
 	}
 	//------------------------------------------------------------------------------------------------------------
 	void GameStateInRuntime::LoadLevel(const std::string& fileName)
@@ -187,6 +210,7 @@ namespace Arkanoid
 		int row = 0;
 		Vector2D position;
 		char symbol;
+		int numberSymbol = 0;
 
 		//Open file
 		if (!file.is_open())
@@ -205,9 +229,36 @@ namespace Arkanoid
 				{
 					position = { c * BASE_SEGMENT_SIZE * 2 + BASE_SEGMENT_SIZE, row * BASE_SEGMENT_SIZE + BASE_SEGMENT_SIZE * 0.5f };
 
-					if (symbol == '1')
+					if  (symbol == 'M')
 					{
-						m_blocks.emplace_back(std::make_shared <Block>(1, size, position));
+						m_allBlocks.emplace_back(std::make_shared <Block>(size, position));
+						continue;
+					}
+					else if (symbol == '$')
+					{
+						m_allBlocks.emplace_back(std::make_shared <BlockScoreUp>(1, size, position));
+						m_distBlocksCount++;
+						continue;
+					}
+					else if (symbol == 'P')
+					{
+						m_allBlocks.emplace_back(std::make_shared <PoisonBlock>(1, size, position));
+						m_distBlocksCount++;
+						continue;
+					}
+					else if (symbol == 'D')
+					{
+						m_allBlocks.emplace_back(std::make_shared <DisorientBlock>(1, size, position));
+						m_distBlocksCount++;
+						continue;
+					}
+
+					numberSymbol = symbol - '0';
+					if (numberSymbol > 0 && numberSymbol < 10)
+					{
+						m_allBlocks.emplace_back(std::make_shared <DistractedBlock>(numberSymbol, size, position));
+						m_distBlocksCount++;
+						continue;
 					}
 				}
 			}
@@ -228,7 +279,6 @@ namespace Arkanoid
 				return;
 			}
 		}
-
 	}
 	//Game
 	//-----------------------------------------------------------------------------------------------------------
@@ -375,6 +425,11 @@ namespace Arkanoid
 		return "";
 	}
 	//-----------------------------------------------------------------------------------------------------------
+	std::shared_ptr<GameStateInRuntime> Game::GetRuntimeGameState()
+	{
+		return m_runtimeGameState;
+	}
+	//-----------------------------------------------------------------------------------------------------------
 	Game::Game()
 	{
 		//Find all paths for levels files
@@ -410,7 +465,8 @@ namespace Arkanoid
 	{
 		if (state == State::GameInProgress)
 		{
-			return std::make_shared<GameStateInRuntime>(state, score);
+			m_runtimeGameState = std::make_shared<GameStateInRuntime>(state, score);
+			return m_runtimeGameState;
 		}
 		else
 		{

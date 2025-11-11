@@ -56,7 +56,14 @@ namespace Arkanoid
 	{
 		for (int i = 0; i < m_segments.size(); i++)
 		{
-			m_segments[i]->SetPosition(xPosition);
+			if (m_isPoisoned)
+			{
+				m_segments[i]->SetPosition(xPosition * 0.5f);
+			}
+			else
+			{
+				m_segments[i]->SetPosition(xPosition);
+			}
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
@@ -87,5 +94,17 @@ namespace Arkanoid
 		{
 			currentSegment->Visualize(window);
 		}
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void Base::OnHit()
+	{
+		/*GameStateInRuntime* gameState = Game::GetInstance().GetRuntimeGameState().get();
+		if (gameState)
+		{
+			m_isPoisoned = gameState->GetPoison();
+			gameState->SetPoison();
+			m_isDisorient = gameState->GetDesorient();
+			gameState->SetDesorient();
+		}*/
 	}
 }

@@ -1,0 +1,29 @@
+#include "SmothTimer.h"
+
+namespace Arkanoid
+{
+	//------------------------------------------------------------------------------------------------------------
+	void SmothTimer::StartTimer(float setedTime)
+	{
+		m_setedTime = setedTime;
+		m_currentTime = setedTime;
+		m_timerStarted = true;
+	}
+	//------------------------------------------------------------------------------------------------------------
+	void SmothTimer::UpdateTimer(float deltaTime)
+	{
+		if (!m_timerStarted)
+		{
+			return;
+		}
+		m_currentTime -= deltaTime;
+		EachTickAction(deltaTime);
+
+		if (m_currentTime <= 0)
+		{
+			FinalAction();
+			m_timerStarted = false;
+		}
+	}
+}
+

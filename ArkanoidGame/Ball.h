@@ -54,6 +54,9 @@ namespace Arkanoid
 		PoisonBall(Vector2D size, Vector2D position, Vector2D vectorSpeed);
 		~PoisonBall() {}
 		void OnHit() override;
+	private:
+
+		void CheckCollisions() override;
 	};
 
 	class DesorientBall final : public Ball
