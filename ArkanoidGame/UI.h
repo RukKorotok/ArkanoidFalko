@@ -30,7 +30,9 @@ namespace Arkanoid
 		Main,
 		GameOver,
 		Win,
-		ExitGame
+		ExitGame,
+		Load,
+		Save
 	};
 
 	class Menu;
@@ -54,7 +56,7 @@ namespace Arkanoid
 		void SetStringInText(sf::Text& text, std::string string);
 		void SetShapeColor(sf::RectangleShape& shape, const sf::Color& color);
 		void SetTextColor(sf::Text& text, const sf::Color& color);
-		std::shared_ptr<Menu> CreateMenu(std::string section);
+		std::shared_ptr<Menu> CreateMenu(std::string section, bool customTitle, std::string title);
 		void RemoveMenu(Menu& menu);
 		std::vector<std::shared_ptr<Menu>> GetMenu();
 		INIReader GetReader();

@@ -161,6 +161,7 @@
   <ItemGroup>
     <ClCompile Include="Ball.cpp" />
     <ClCompile Include="Block.cpp" />
+    <ClCompile Include="Factories.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameMain.cpp" />
     <ClCompile Include="ini.c" />
@@ -172,6 +173,8 @@
     <ClCompile Include="Objects.cpp">
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp17</LanguageStandard>
     </ClCompile>
+    <ClCompile Include="Observer.cpp" />
+    <ClCompile Include="SaveSystem.cpp" />
     <ClCompile Include="Sound.cpp" />
     <ClCompile Include="SmothTimer.cpp" />
     <ClCompile Include="UI.cpp" />
@@ -180,6 +183,7 @@
     <ClInclude Include="Ball.h" />
     <ClInclude Include="Block.h" />
     <ClInclude Include="Config.h" />
+    <ClInclude Include="Factories.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="ini.h" />
     <ClInclude Include="INIReader.h" />
@@ -189,6 +193,8 @@
     <ClInclude Include="Base.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="Objects.h" />
+    <ClInclude Include="Observer.h" />
+    <ClInclude Include="SaveSystem.h" />
     <ClInclude Include="Sound.h" />
     <ClInclude Include="SmothTimer.h" />
     <ClInclude Include="UI.h" />

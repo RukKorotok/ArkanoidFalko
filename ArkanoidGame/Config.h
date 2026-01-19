@@ -15,6 +15,7 @@ namespace Arkanoid
 	const std::string INPUT_TITLE = "Inter name: ";
 
 	// Game config
+	const int MAX_NAME_LENGTH = 10;
 	const int SCREEN_WIDTH = 800;
 	const int SCREEN_HEIGHT = 600;
 	const float INITIAL_BALL_SPEED = 400.0f; 

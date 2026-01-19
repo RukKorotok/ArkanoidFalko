@@ -7,9 +7,10 @@ namespace Arkanoid
 {
 	//Block
 	//-----------------------------------------------------------------------------------------------------------
-	Block::Block(Vector2D size, Vector2D position) : GameObject(RESOURCES_PATH + "FrameClear.png", size, position)
+	Block::Block(int health, Vector2D size, Vector2D position) : GameObject(RESOURCES_PATH + "FrameClear.png", size, position)
 	{
 		SetColor(sf::Color::White);
+		m_type = BlockType::Wall;
 		UI::GetInstance().InitShape(m_blockShape, size.x, size.y, 0.9f, sf::Color::White, position.x, position.y);
 	}
 	//-----------------------------------------------------------------------------------------------------------
@@ -18,40 +19,38 @@ namespace Arkanoid
 		window.draw(m_blockShape);
 		GameObject::Draw(window);
 	}
+	//ISerializable
+	// -----------------------------------------------------------------------------------------------------------
+	void Block::Serialize(std::ostream& out) const
+	{
+		out << m_type << " " << m_position.x << " " << m_position.y << " " << m_maxHealth << "\n";
+	}
 	//DestractedBlock
 	//-----------------------------------------------------------------------------------------------------------
-	DistractedBlock::DistractedBlock(int health, Vector2D size, Vector2D position) : Block(size, position)
+	DistractedBlock::DistractedBlock(int health, Vector2D size, Vector2D position) : Block(health, size, position)
 	{
-		assert(m_frameCrackTexture.loadFromFile(RESOURCES_PATH + "FrameCrack.png"));
-		assert(m_frameBrokenTexture.loadFromFile(RESOURCES_PATH + "FrameBroken.png"));
+		assert(m_frameCrackTexture.loadFromFile(RESOURCES_PATH + "FrameCrack.png") );
+		assert(m_frameBrokenTexture.loadFromFile(RESOURCES_PATH + "FrameBroken.png") );
 		m_maxHealth = health;
 		m_currentHealth = health;
+		m_destroyer = nullptr;
 		sf::Color color = sf::Color(100, 255 - health * 25, 255 - health * 25, 255);
 		SetColor(sf::Color(color));
+		m_type = BlockType::Normal;
 		UI::GetInstance().InitShape(m_blockShape, size.x, size.y, 0.9f, sf::Color::White, position.x, position.y);
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void DistractedBlock::OnHit()
+	void DistractedBlock::OnHit(ICollidable& other)
 	{
-		float healthPersent = 0.0f;
-
 		m_currentHealth--;
 		if (m_currentHealth <= 0)
 		{
 			StartTimer(0.20f);
+			m_destroyer = &other;
 		}
 		else
 		{
-			healthPersent = float(m_currentHealth) / float(m_maxHealth);
-
-			if (healthPersent > 0.33f && healthPersent < 0.66f)
-			{
-				m_sprite.setTexture(m_frameCrackTexture);
-			}
-			else if (healthPersent < 0.33f)
-			{
-				m_sprite.setTexture(m_frameBrokenTexture);
-			}
+			UpdateTexture();
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
@@ -60,15 +59,33 @@ namespace Arkanoid
 		UpdateTimer(deltaTime);
 	}
 	//-----------------------------------------------------------------------------------------------------------
+	int DistractedBlock::GetMaxHealth()
+	{
+		return m_maxHealth;
+	}
+	//ISerializable
+	// -----------------------------------------------------------------------------------------------------------
+	void DistractedBlock::Serialize(std::ostream& out) const
+	{
+		Block::Serialize(out);
+		out << m_currentHealth << "\n";
+	}
+	// -----------------------------------------------------------------------------------------------------------
+	void DistractedBlock::Deserialize(std::istream& in)
+	{
+		if (in >> m_currentHealth)
+		{
+			UpdateTexture();
+		}
+		else
+		{
+			throw std::runtime_error("Ошибка данных при чтении Ball");
+		}
+	}
+	//-----------------------------------------------------------------------------------------------------------
 	void DistractedBlock::FinalAction()
 	{
-		GameStateInRuntime* gameState = Game::GetInstance().GetRuntimeGameState().get();
-		if (gameState)
-		{
-			gameState->AddScore(m_maxHealth);
-			gameState->RemoveObject(*this);
-			gameState->SubtractBlockCount();
-		}
+		OnDestracted(*m_destroyer);
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	void DistractedBlock::EachTickAction(float deltaTime)
@@ -84,56 +101,38 @@ namespace Arkanoid
 		m_sprite.setColor(spriteColor);
 		m_blockShape.setFillColor(shapeColor);
 	}
+	//-----------------------------------------------------------------------------------------------------------
+	void DistractedBlock::UpdateTexture()
+	{
+		float healthPersent = float(m_currentHealth) / float(m_maxHealth);
+
+		if (healthPersent > 0.33f && healthPersent < 0.66f)
+		{
+			m_sprite.setTexture(m_frameCrackTexture);
+		}
+		else if (healthPersent < 0.33f)
+		{
+			m_sprite.setTexture(m_frameBrokenTexture);
+		}
+	}
 	//BlockScoreUp
 	//-----------------------------------------------------------------------------------------------------------
 	BlockScoreUp::BlockScoreUp(int health, Vector2D size, Vector2D position) : DistractedBlock(health, size, position)
 	{
 		SetColor(sf::Color::Magenta);
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	void BlockScoreUp::FinalAction()
-	{
-		GameStateInRuntime* gameState = Game::GetInstance().GetRuntimeGameState().get();
-		if (gameState)
-		{
-			gameState->RemoveObject(*this);
-			gameState->AddScore(m_maxHealth * 10);
-			gameState->SubtractBlockCount();
-		}
+		m_type = BlockType::ScoreUp;
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	PoisonBlock::PoisonBlock(int health, Vector2D size, Vector2D position) : DistractedBlock(health, size, position)
 	{
 		SetColor(sf::Color::Green);
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	void PoisonBlock::FinalAction()
-	{
-		Vector2D size = { BALL_SIZE, BALL_SIZE };
-		Vector2D vectorSpeed = { 0.0f, 1.0f };
-		GameStateInRuntime* gameState = Game::GetInstance().GetRuntimeGameState().get();
-		if (gameState)
-		{
-			DistractedBlock::FinalAction();
-			gameState->AddAdditionalBall(std::make_shared<PoisonBall>(size, m_position, vectorSpeed));
-		}
+		m_type = BlockType::Poison;
 	}
 	//DisorientBlock
 	//-----------------------------------------------------------------------------------------------------------
 	DisorientBlock::DisorientBlock(int health, Vector2D size, Vector2D position) : DistractedBlock(health, size, position)
 	{
 		SetColor(sf::Color::Blue);
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	void DisorientBlock::FinalAction()
-	{
-		Vector2D size = { BALL_SIZE, BALL_SIZE };
-		Vector2D vectorSpeed = { 0.0f, 1.0f };
-		GameStateInRuntime* gameState = Game::GetInstance().GetRuntimeGameState().get();
-		if (gameState)
-		{
-			DistractedBlock::FinalAction();
-			gameState->AddAdditionalBall(std::make_shared<DesorientBall>(size, m_position, vectorSpeed));
-		}
+		m_type = BlockType::Disorient;
 	}
 }

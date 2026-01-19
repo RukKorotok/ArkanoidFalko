@@ -5,46 +5,31 @@
 namespace Arkanoid
 {
 	//------------------------------------------------------------------------------------------------------------
-	void InputHandler::HandleInputInGame(float position)
+	void InputHandler::UpdateHandler(const sf::Event& event, sf::RenderWindow& window)
 	{
-		// Change player direction
-		if (position > 0 && position < SCREEN_WIDTH)
-		{
-			Game::GetInstance().GetCurrentGameState()->RefreshMousePosition(position);
+		if (event.type == sf::Event::KeyPressed) {
+			if (!m_currentKeyStates[event.key.code]) {
+				OnInput(event.key.code);
+				m_isNewPressFrame = true; 
+			}
+			m_currentKeyStates[event.key.code] = true;
 		}
-		if (sf::Keyboard::isKeyPressed(PAUSE))
-		{
-			Game::GetInstance().AddGameState(State::ResumeGame, Game::GetInstance().GetCurrentGameState()->GetScore());
+		else if (event.type == sf::Event::KeyReleased) {
+			m_currentKeyStates[event.key.code] = false;
+			m_isNewPressFrame = false;
 		}
-	}
-	//------------------------------------------------------------------------------------------------------------
-	bool InputHandler::HandlerInputMenu(bool isAllKeysRealised)
-	{
-		std::shared_ptr<Menu> currentMenu = UI::GetInstance().GetMenu()[UI::GetInstance().GetMenu().size() - 1];
 
-		if (!isAllKeysRealised)
-		{
-			if (sf::Keyboard::isKeyPressed(DOWN_DIRECTION) )
-			{
-				currentMenu->SwitchMenuItem(true);
-				return true;
-			}
-			else if (sf::Keyboard::isKeyPressed(UP_DIRECTION) )
-			{
-				currentMenu->SwitchMenuItem(false);
-				return true;
-			}
-			else if (sf::Keyboard::isKeyPressed(GO_BACK) )
-			{
-				currentMenu->RemoveMenuStackItem();
-				return true;
-			}
-			else if (sf::Keyboard::isKeyPressed(ENTER))
-			{
-				currentMenu->GetStack().top().find(currentMenu->GetMenuPointer())->second->ActionHandle();
-				return true;
+		if (event.type == sf::Event::TextEntered) {
+			if (m_isNewPressFrame) {
+				OnInputText(event.text.unicode);
+				m_isNewPressFrame = false;
 			}
 		}
-		return false;
+
+		float screenWidth = static_cast<float>(window.getSize().x);
+		float mouseX = (float)sf::Mouse::getPosition(window).x;
+		if (mouseX < 0) mouseX = 0;
+		if (mouseX > screenWidth) mouseX = screenWidth;
+		OnChangedMousePosition(mouseX);
 	}
 }

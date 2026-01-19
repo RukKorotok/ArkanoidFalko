@@ -37,7 +37,12 @@ int main()
 		float currentTime = gameClock.getElapsedTime().asSeconds();
 		float deltaTime = currentTime - lastTime;
 		lastTime = currentTime;
-
+		Game::GetInstance();
+		if(!Game::GetInstance().GetCurrentGameState())
+		{
+			Game::GetInstance().Init();
+		}
+		Game::GetInstance().GetCurrentGameState()->UpdateGame(window, deltaTime);
 		// Read events
 		while (window.pollEvent(event))
 		{
@@ -46,35 +51,8 @@ int main()
 				window.close();
 				break;
 			}
-			if (event.type == sf::Event::KeyPressed)
-			{
-				pressedKey = event.key.code;
-			}
-			if (event.type == sf::Event::KeyReleased && event.key.code == pressedKey)
-			{
-				isKeysPressed = false;
-
-			}
+			Game::GetInstance().GetInputHandler()->UpdateHandler(event, window);
 		}
-
-		if (Game::GetInstance().GetCurrentGameState()->GetState() == State::GameInProgress)
-		{
-			InputHandler::GetInstance().HandleInputInGame(float(sf::Mouse::getPosition(window).x));
-			Game::GetInstance().GetCurrentGameState()->UpdateGame(window, deltaTime);
-		}
-		else
-		{
-			if (InputHandler::GetInstance().HandlerInputMenu(isKeysPressed))
-			{
-				Game::GetInstance().GetCurrentGameState()->UpdateGame(window, deltaTime);
-				isKeysPressed = true;
-			}
-			if (currentState != Game::GetInstance().GetCurrentGameState()->GetState())
-			{
-				Game::GetInstance().GetCurrentGameState()->UpdateGame(window, deltaTime);
-				currentState = Game::GetInstance().Game::GetInstance().GetCurrentGameState()->GetState();
-			}
-		}
-		}
+	}
 	return 0;
 }

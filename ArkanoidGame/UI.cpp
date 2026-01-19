@@ -65,18 +65,25 @@ namespace Arkanoid
 		text.setFillColor(color);
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	std::shared_ptr<Menu> UI::CreateMenu(std::string section)
+	std::shared_ptr<Menu> Arkanoid::UI::CreateMenu(std::string section, bool customTitle, std::string title)
 	{
 		if (section == "RecordList")
 		{
 			std::shared_ptr<Menu> menu = std::make_shared<RecordsMenu>(section, *m_reader, m_currentMenuList.size());
 			m_currentMenuList.push_back(menu);
+			Game::GetInstance().GetInputHandler()->AddObserver(m_currentMenuList.back());
 			return menu;
 		}
 		else
 		{
-			std::shared_ptr<Menu> menu = std::make_shared<Menu>(section, *m_reader, m_currentMenuList.size());
+			std::shared_ptr<Menu> menu = std::make_shared<Menu>(section, *m_reader, m_currentMenuList.size(), customTitle, title);
 			m_currentMenuList.push_back(menu);
+			Game::GetInstance().GetInputHandler()->AddObserver(m_currentMenuList.back());
+			if (section == "GameOverMenu" && RecordsManager::GetInstance().IsEligible(Game::GetInstance().GetCurrentGameState()->GetScore()))
+			{
+				m_currentMenuList.push_back(std::make_shared<InputMenu>("InputMenu", *m_reader, m_currentMenuList.size()));
+				Game::GetInstance().GetInputHandler()->AddObserver(m_currentMenuList.back());
+			}
 			return menu;
 		}
 	}

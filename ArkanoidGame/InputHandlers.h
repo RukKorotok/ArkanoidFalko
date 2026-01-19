@@ -1,26 +1,25 @@
 #pragma once
+#include "SFML/Graphics.hpp"
+#include "Observer.h"
+#include <memory>
 
 namespace Arkanoid
 {
-
-	class InputHandler
+	class InputHandler : public InputObservable
 	{
 	public:
 
-		static InputHandler& GetInstance()
-		{
-			static InputHandler inputHandler;
-			return inputHandler;
-		}
-
-		void HandleInputInGame(float position);
-		bool HandlerInputMenu(bool isAllKeysRealised);
-
-	private:
 		InputHandler() {}
 		~InputHandler() {}
 
+		void UpdateHandler(const sf::Event& event, sf::RenderWindow& window);
+
+	private:
+
 		InputHandler(InputHandler const&) = delete;
 		InputHandler& operator = (InputHandler const&) = delete;
+		std::map<sf::Keyboard::Key, bool> m_currentKeyStates;
+		std::map<sf::Keyboard::Key, bool> m_previewKeyStates;
+		bool m_isNewPressFrame = false;
 	};
 }

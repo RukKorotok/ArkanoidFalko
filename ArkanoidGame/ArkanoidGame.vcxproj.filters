@@ -52,9 +52,6 @@
     <ClCompile Include="INIReader.cpp">
       <Filter>Sources\OutsidePlugins</Filter>
     </ClCompile>
-    <ClCompile Include="InputHandlers.cpp">
-      <Filter>Sources\Singletones</Filter>
-    </ClCompile>
     <ClCompile Include="Objects.cpp">
       <Filter>Sources\InheritanceSource</Filter>
     </ClCompile>
@@ -62,6 +59,18 @@
       <Filter>Sources\GameObjects</Filter>
     </ClCompile>
     <ClCompile Include="SmothTimer.cpp">
+      <Filter>Sources\InheritanceSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Factories.cpp">
+      <Filter>Sources\InheritanceSource</Filter>
+    </ClCompile>
+    <ClCompile Include="SaveSystem.cpp">
+      <Filter>Sources\InheritanceSource</Filter>
+    </ClCompile>
+    <ClCompile Include="Observer.cpp">
+      <Filter>Sources\InheritanceSource</Filter>
+    </ClCompile>
+    <ClCompile Include="InputHandlers.cpp">
       <Filter>Sources\InheritanceSource</Filter>
     </ClCompile>
   </ItemGroup>
@@ -96,9 +105,6 @@
     <ClInclude Include="INIReader.h">
       <Filter>Sources\OutsidePlugins</Filter>
     </ClInclude>
-    <ClInclude Include="InputHandlers.h">
-      <Filter>Sources\Singletones</Filter>
-    </ClInclude>
     <ClInclude Include="Objects.h">
       <Filter>Sources\InheritanceSource</Filter>
     </ClInclude>
@@ -109,6 +115,18 @@
       <Filter>Sources\InheritanceSource</Filter>
     </ClInclude>
     <ClInclude Include="SmothTimer.h">
+      <Filter>Sources\InheritanceSource</Filter>
+    </ClInclude>
+    <ClInclude Include="Factories.h">
+      <Filter>Sources\InheritanceSource</Filter>
+    </ClInclude>
+    <ClInclude Include="Observer.h">
+      <Filter>Sources\InheritanceSource</Filter>
+    </ClInclude>
+    <ClInclude Include="SaveSystem.h">
+      <Filter>Sources\InheritanceSource</Filter>
+    </ClInclude>
+    <ClInclude Include="InputHandlers.h">
       <Filter>Sources\InheritanceSource</Filter>
     </ClInclude>
   </ItemGroup>

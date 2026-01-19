@@ -5,7 +5,6 @@ namespace Arkanoid
 	//------------------------------------------------------------------------------------------------------------
 	void SmothTimer::StartTimer(float setedTime)
 	{
-		m_setedTime = setedTime;
 		m_currentTime = setedTime;
 		m_timerStarted = true;
 	}

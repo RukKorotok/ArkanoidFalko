@@ -11,7 +11,6 @@ namespace Arkanoid
 	protected:
 
 		bool m_timerStarted = false;
-		float m_setedTime = 0.0f;
 		float m_currentTime = 0.0f;
 
 		virtual void UpdateTimer(float deltaTime);

@@ -1,14 +1,23 @@
 #pragma once
-#include <memory>
-#include "SFML/Graphics.hpp"
+#include <iostream>
 
 namespace Arkanoid
 {
-	class Collidable
+	class ICollidable
 	{
 
 	public:
 
-		virtual void OnHit() = 0;
+		virtual void OnHit(ICollidable& other) = 0;
+	};
+
+	class ISerializable 
+
+	{
+	public:
+		virtual ~ISerializable() = default;
+
+		virtual void Serialize(std::ostream& out) const = 0;
+		virtual void Deserialize(std::istream& in) = 0;
 	};
 }

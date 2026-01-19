@@ -19,6 +19,11 @@ namespace Arkanoid
 		SetPosition(SCREEN_WIDTH * 0.5f);
 	}
 	//-----------------------------------------------------------------------------------------------------------
+	void BaseSegment::SetIndex(int index)
+	{
+		m_index = index;
+	}
+	//-----------------------------------------------------------------------------------------------------------
 	int BaseSegment::GetIndex()
 	{
 		return m_index;
@@ -32,79 +37,126 @@ namespace Arkanoid
 	//-----------------------------------------------------------------------------------------------------------
 	Base::Base()
 	{
-		//Hard code !!!!!!!!!!!!!!!!!!
 		BaseSegment* currentSegment;
 		sf::Vector2f location;
 		currentSegment = new BaseSegment(0, false);
-		m_segments.push_back(currentSegment);
+		m_defaultSegments.push_back(currentSegment);
 		currentSegment = new BaseSegment(1, true);
-		m_segments.push_back(currentSegment);
+		m_defaultSegments.push_back(currentSegment);
 		currentSegment = new BaseSegment(-1, true);
-		m_segments.push_back(currentSegment);
+		m_defaultSegments.push_back(currentSegment);
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	Base::~Base()
 	{
-		for (BaseSegment* segment : m_segments)
+		for (BaseSegment* segment : m_defaultSegments)
 		{
 			delete segment;
 		}
-		m_segments.clear();
+		m_defaultSegments.clear();
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void Base::UpdateBase(float xPosition)
+	Vector2D Base::GetPosition()
 	{
-		for (int i = 0; i < m_segments.size(); i++)
+		return m_defaultSegments[0]->GetPosition();
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	Vector2D Base::GetSize()
+	{
+		return { BASE_SEGMENT_SIZE * (m_defaultSegments.size() + m_additionalSegments.size()), BASE_SEGMENT_SIZE };
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void Base::UpdateBase(float deltaTime, sf::RenderWindow& window)
+	{
+		for (BaseSegment* currentSegment : m_defaultSegments)
 		{
-			if (m_isPoisoned)
-			{
-				m_segments[i]->SetPosition(xPosition * 0.5f);
-			}
-			else
-			{
-				m_segments[i]->SetPosition(xPosition);
-			}
+			currentSegment->Visualize(window);
+		}
+		for (BaseSegment* currentSegment : m_additionalSegments)
+		{
+			currentSegment->Visualize(window);
+		}
+		UpdateTimer(deltaTime);
+	}
+	//ISerializable
+	//-----------------------------------------------------------------------------------------------------------
+	void Base::Serialize(std::ostream& out) const
+	{
+		out << m_xPosition << " " << m_currentTime << " " << m_timerStarted << " " << m_additionalSegments.size() << "\n";
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void Base::Deserialize(std::istream& in)
+	{
+		if (!(in >> m_xPosition >> m_currentTime >> m_timerStarted >> m_additionalSegmentsSize)) 
+		{
+			throw std::runtime_error("Ошибка данных при чтении Ball");
+		}
+	}
+	//Timer
+	//-----------------------------------------------------------------------------------------------------------
+	void Base::FinalAction()
+	{
+		SetDefault();
+		UpdateBasePosition(m_xPosition);
+	}
+	//Handlers
+	//-----------------------------------------------------------------------------------------------------------
+	void Base::DoOnDestracted(std::shared_ptr<GameObservable> observable, ICollidable& other)
+	{
+		if (std::dynamic_pointer_cast<IncreasingBall>(observable) && observable.get() != dynamic_cast<GameObservable*>(&other))
+		{
+			AddSegments();
+			UpdateBasePosition(m_xPosition);
+		}
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void Base::DoOnChangedMousePosition(float position)
+	{
+		UpdateBasePosition(position);
+	}
+	//Private
+	//-----------------------------------------------------------------------------------------------------------
+		void Base::UpdateBasePosition(float xPosition)
+	{
+		m_xPosition = xPosition;
+
+		for (int i = 0; i < m_defaultSegments.size(); i++)
+		{
+			m_defaultSegments[i]->SetPosition(xPosition);
+		}
+		for (auto item : m_additionalSegments)
+		{
+			item->SetPosition(xPosition);
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	void Base::ChangeBaseColor(sf::Color color)
 	{
-		if (m_segments[0]->GetSprite().getColor() != color)
+		if (m_defaultSegments[0]->GetSprite().getColor() != color)
 		{
-			for (int i = 0; i < m_segments.size(); i++)
+			for (int i = 0; i < m_defaultSegments.size(); i++)
 			{
-				m_segments[i]->GetSprite().setColor(color);
+				m_defaultSegments[i]->GetSprite().setColor(color);
 			}
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	Vector2D Base::GetPosition()
+	void Base::AddSegments()
 	{
-		return m_segments[0]->GetPosition();
+
+		int backIndex = m_defaultSegments.back()->GetIndex();
+		m_defaultSegments[m_defaultSegments.size() - 1]->SetIndex(backIndex - 1);
+		m_defaultSegments[m_defaultSegments.size() - 2]->SetIndex(backIndex * -1 + 1);
+		m_additionalSegments.push_back(new BaseSegment(backIndex * -1, false) );
+		m_additionalSegments.push_back(new BaseSegment(backIndex, false) );
+		StartTimer(m_TIMER_LENGHT);
+		
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	Vector2D Base::GetSize()
+	void Base::SetDefault()
 	{
-		return { BASE_SEGMENT_SIZE * m_segments.size(), BASE_SEGMENT_SIZE };
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	void Base::DrawBase(sf::RenderWindow& window)
-	{
-		for (BaseSegment* currentSegment : m_segments)
-		{
-			currentSegment->Visualize(window);
-		}
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	void Base::OnHit()
-	{
-		/*GameStateInRuntime* gameState = Game::GetInstance().GetRuntimeGameState().get();
-		if (gameState)
-		{
-			m_isPoisoned = gameState->GetPoison();
-			gameState->SetPoison();
-			m_isDisorient = gameState->GetDesorient();
-			gameState->SetDesorient();
-		}*/
+		m_additionalSegments.clear();
+		m_defaultSegments[m_defaultSegments.size() - 1]->SetIndex(- 1);
+		m_defaultSegments[m_defaultSegments.size() - 2]->SetIndex(1);
 	}
 }

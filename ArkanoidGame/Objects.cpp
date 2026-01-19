@@ -66,4 +66,10 @@ namespace Arkanoid
 	{
 		return m_string;
 	}
+	//-----------------------------------------------------------------------------------------------------------
+	void MenuItem::ChangeText(std::string newText)
+	{
+		m_string = newText;
+		m_text.setString(newText);
+	}
 }

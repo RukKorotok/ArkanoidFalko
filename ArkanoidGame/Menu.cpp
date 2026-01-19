@@ -49,15 +49,18 @@ namespace Arkanoid
 	void MenuItemWithAction::ActionHandle()
 	{
 		std::vector<std::shared_ptr<Menu>> menu = UI::GetInstance().GetMenu();
-		menu[menu.size() - 1]->SetMenuPointer(1);
+		if (menu.size() > 0)
+		{
+			menu[menu.size() - 1]->SetMenuPointer(1);
 
-		if (m_action == " ><|")
-		{
-			menu[menu.size() - 1]->RemoveMenuStackItem();
-		}
-		else
-		{
-			menu[menu.size() - 1]->AddMenuItems(m_action, UI::GetInstance().GetReader());
+			if (m_action == " ><|")
+			{
+				menu[menu.size() - 1]->RemoveMenuStackItem();
+			}
+			else
+			{
+				menu[menu.size() - 1]->AddMenuItems(m_action, UI::GetInstance().GetReader(), false, "");
+			}
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
@@ -74,13 +77,22 @@ namespace Arkanoid
 	{
 		return m_selected;
 	}
+	//Handler
+	//-----------------------------------------------------------------------------------------------------------
+	void Arkanoid::MenuItemWithAction::DoOnInput(sf::Keyboard::Key key)
+	{
+		if (key == ENTER)
+		{
+			ActionHandle();
+		}
+	}
 	//MenuItemToOpenSubmenu
 	//-----------------------------------------------------------------------------------------------------------
 	MenuItemToOpenSubmenu::MenuItemToOpenSubmenu(std::string text, std::string action) : MenuItemWithAction(text, action) {}
 	//-----------------------------------------------------------------------------------------------------------
 	void MenuItemToOpenSubmenu::ActionHandle()
 	{
-		UI::GetInstance().CreateMenu(m_action);
+		UI::GetInstance().CreateMenu(m_action, false, "");
 	}
 	//MenuItemToSetState
 	//-----------------------------------------------------------------------------------------------------------
@@ -106,7 +118,8 @@ namespace Arkanoid
 	void MenuItemToSetState::ActionHandle()
 	{
 		std::vector<std::shared_ptr<Menu>> menu = UI::GetInstance().GetMenu();
-
+		int scores = Game::GetInstance().GetCurrentGameState()->GetScore();
+		bool actionEnded = true;
 		if (m_SETTINGS_MAP.count(m_action) > 0)
 		{
 			//set settings
@@ -121,7 +134,7 @@ namespace Arkanoid
 		{
 			if (m_isOpenSubMenu)
 			{
-				UI::GetInstance().CreateMenu(m_secondAction);
+				UI::GetInstance().CreateMenu(m_secondAction, false, "");
 			}
 			else
 			{
@@ -139,18 +152,40 @@ namespace Arkanoid
 				}
 				case State::GameInProgress:
 				{
-					Game::GetInstance().AddGameState(m_STATE_ACTIONS_MAP.find(m_action)->second, Game::GetInstance().GetCurrentGameState()->GetScore());
+					Game::GetInstance().RemoveGameState();
+					Game::GetInstance().AddGameState(m_STATE_ACTIONS_MAP.find(m_action)->second, scores, false);
 					break;
 				}
 				case State::GameOver:
 				{
-					Game::GetInstance().AddGameState(m_STATE_ACTIONS_MAP.find(m_action)->second, Game::GetInstance().GetCurrentGameState()->GetScore());
+					Game::GetInstance().AddGameState(m_STATE_ACTIONS_MAP.find(m_action)->second, scores, false);
 					break;
 				}
 				case State::Main:
 				{
 					UI::GetInstance().RemoveMenu();
 					Game::GetInstance().ResetGame();
+
+					break;
+				}
+				case State::Load:
+				{
+					if(SaveManager::CheckSave("../Saves/Save.txt"))
+					{
+						UI::GetInstance().RemoveMenu();
+						Game::GetInstance().LoadGame();
+					}
+					else
+					{
+						UI::GetInstance().CreateMenu("InfoMenu", true, "Save empty");
+						actionEnded = false;
+					}
+
+					break;
+				}
+				case State::Save:
+				{
+					Game::GetInstance().SaveGame();
 
 					break;
 				}
@@ -162,7 +197,7 @@ namespace Arkanoid
 			std::cerr << "Action not found" << std::endl;
 		}
 
-		if (m_atribute == " ><|" || m_atribute == " <>|")
+		if ((m_atribute == " ><|" || m_atribute == " <>|") && menu.size() > 0 && actionEnded)
 		{
 			menu[menu.size() - 1]->RemoveMenuStackItem();
 		}
@@ -177,7 +212,7 @@ namespace Arkanoid
 			window.draw(m_checkBoxFrame);
 			if (m_SETTINGS_MAP.count(m_action) > 0)
 			{
-				if (!(static_cast<uint32_t>(m_SETTINGS_MAP.find(m_action)->second) & Game::GetInstance().GetSetings()))
+				if ((static_cast<uint32_t>(m_SETTINGS_MAP.find(m_action)->second) & Game::GetInstance().GetSetings()))
 				{
 					UI::GetInstance().InitShape(m_checkBox, m_CHECKBOX_SIZE, m_CHECKBOX_SIZE, 1.0f, sf::Color::Green, m_MENU_CHECKBOX_INDETATION.x - MENU_INDENTATION_OFFSET * tabIndex.x, m_MENU_CHECKBOX_INDETATION.y + 50.0f * tabIndex.y);
 					window.draw(m_checkBox);
@@ -195,9 +230,9 @@ namespace Arkanoid
 	}
 	//Menu
 	//-----------------------------------------------------------------------------------------------------------
-	Menu::Menu(const std::string& section, const INIReader& reader, int index)
+	Arkanoid::Menu::Menu(const std::string& section, const INIReader& reader, int index, bool customTitle, std::string title)
 	{
-		AddMenuItems(section, reader);
+		AddMenuItems(section, reader, customTitle, title);
 		m_index = index;
 	}
 	//-----------------------------------------------------------------------------------------------------------
@@ -218,14 +253,10 @@ namespace Arkanoid
 		}
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void Menu::AddMenuItems(const std::string& section, const INIReader& reader)
-	{
-		m_menuStack.push(LoadMenuItems(section, reader));
-	}
-	//-----------------------------------------------------------------------------------------------------------
-	std::map<int, std::shared_ptr<MenuItemWithAction>> Menu::LoadMenuItems(const std::string& section, const INIReader& reader)
+	std::map<int, std::shared_ptr<MenuItemWithAction>> Menu::LoadMenuItems(const std::string& section, const INIReader& reader, bool customTitle, std::string title)
 	{
 		std::vector<std::shared_ptr<Menu>> menuList;
+		std::shared_ptr<MenuItemWithAction> currentItem;
 		const size_t simbol_size = 4;
 		std::map<int, std::shared_ptr<MenuItemWithAction>> menuItems;
 		size_t mainActionPos = 0;
@@ -260,7 +291,12 @@ namespace Arkanoid
 				{
 					//Create menu title
 					mainAction = "";
-					menuItems[id] = std::make_shared <MenuItemWithAction>(value, mainAction);
+					currentItem = std::make_shared <MenuItemWithAction>(value, mainAction);
+					if (customTitle)
+					{
+						currentItem->ChangeText(title);
+					}
+					menuItems[id] = currentItem;
 				}
 				else
 				{
@@ -369,9 +405,9 @@ namespace Arkanoid
 		return m_menuStack;
 	}
 	//-----------------------------------------------------------------------------------------------------------
-	void Menu::AddMenuStackItem(std::map<int, std::shared_ptr<MenuItemWithAction>> menuItem)
+	void Arkanoid::Menu::AddMenuItems(const std::string& section, const INIReader& reader, bool customTitle, std::string title)
 	{
-		m_menuStack.push(menuItem);
+		m_menuStack.push(LoadMenuItems(section, reader, customTitle, title));
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	void Menu::RemoveMenuStackItem()
@@ -396,6 +432,7 @@ namespace Arkanoid
 				i++;
 			}
 		}
+		++i;
 	}
 	//-----------------------------------------------------------------------------------------------------------
 	int Menu::GetMenuPointer()
@@ -412,11 +449,37 @@ namespace Arkanoid
 	{
 		return m_menuStack.top();
 	}
+	//Handler
+	//-----------------------------------------------------------------------------------------------------------
+	void Arkanoid::Menu::DoOnInput(sf::Keyboard::Key key)
+	{
+		if (UI::GetInstance().GetMenu().back().get() == this)
+		{
+			switch (key)
+			{
+			case DOWN_DIRECTION:
+			{
+				SwitchMenuItem(true);
+				break;
+			}
+			case UP_DIRECTION:
+			{
+				SwitchMenuItem(false);
+				break;
+			}
+			case ENTER:
+			{
+				m_menuStack.top().find(m_menuPointer)->second->ActionHandle();
+				break;
+			}
+			}
+		}
+	}
 	//RecordsMenu
 	//-----------------------------------------------------------------------------------------------------------
 	void RecordsMenu::DrawMenu(sf::RenderWindow& window, Vector2D tabMenu)
 	{
-		std::vector<std::shared_ptr<RecordItem>> score = Game::GetInstance().ReadRecordsList();
+		std::vector<std::shared_ptr<RecordItem>> score = RecordsManager::GetInstance().ReadRecordsList();
 
 		float i = 0.0f;
 		bool isScoreDrawed = false;
@@ -438,5 +501,42 @@ namespace Arkanoid
 				}
 			}
 		}
+	}
+	//Handlers
+	//-----------------------------------------------------------------------------------------------------------
+	void Arkanoid::InputMenu::DoOnInput(sf::Keyboard::Key key)
+	{
+		if (UI::GetInstance().GetMenu().back().get() == this && key == ENTER)
+		{
+			RecordsManager::GetInstance().AddRecord(m_name, Game::GetInstance().GetCurrentGameState()->GetScore());
+			std::vector<std::shared_ptr<Menu>> menu = UI::GetInstance().GetMenu();
+			if (menu.size() > 0)
+			{
+				menu[menu.size() - 1]->RemoveMenuStackItem();
+			}
+		}
+	}
+	//-----------------------------------------------------------------------------------------------------------
+	void Arkanoid::InputMenu::DoOnInputText(sf::Uint32 unicode)
+	{
+		if (unicode == 8)
+		{
+			if (!m_name.empty())
+			{
+				m_name.pop_back();
+			}
+		}
+
+		else if (unicode < 128 && m_name.size() < MAX_NAME_LENGTH)
+		{
+			char c = static_cast<char>(unicode);
+
+
+			if (std::isalnum(c) || c == '_')
+			{
+				m_name += c;
+			}
+		}
+		GetStack().top().find(0)->second->ChangeText(m_name);
 	}
 }

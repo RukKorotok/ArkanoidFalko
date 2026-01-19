@@ -1,6 +1,6 @@
 #pragma once
 #include "SFML/Audio.hpp"
-//For next rev
+#include "Observer.h"
 namespace Arkanoid
 {
 	class Game;
@@ -18,7 +18,7 @@ namespace Arkanoid
 		IntroSound,
 		PauseSound
 	};
-	class Audio
+	class Audio : public GameObserver
 	{
 	public:
 
@@ -28,9 +28,11 @@ namespace Arkanoid
 			return audio;
 		}
 
+		std::weak_ptr<GameObserver> GetWeakObserver();
 		void InitAudio();
-		void PlaySound(SoundFile sound);
-		void StopSound(SoundFile sound);
+		//Handler
+		void DoOnDestracted(std::shared_ptr<GameObservable> observable, ICollidable& other) override;
+		void DoOnInteracted(std::shared_ptr<GameObservable> observable) override;
 
 	private:
 
@@ -40,14 +42,20 @@ namespace Arkanoid
 		Audio(const Audio&) = delete;
 		Audio& operator = (Audio const&) = delete;
 
+		void PlaySound(std::pair<sf::Sound, SoundType>& soundPair);
+
 		std::pair<sf::Sound, SoundType> m_hit;
 		std::pair<sf::Sound, SoundType> m_death;
 		std::pair<sf::Sound, SoundType> m_intro;
 		std::pair<sf::Sound, SoundType> m_pause;
+		std::pair<sf::Sound, SoundType> m_bonus;
+		std::pair<sf::Sound, SoundType> m_crash;
 
 		sf::SoundBuffer m_hitWave;
 		sf::SoundBuffer m_deathWave;
 		sf::SoundBuffer m_introWave;
 		sf::SoundBuffer m_pauseWave;
+		sf::SoundBuffer m_bonusWave;
+		sf::SoundBuffer m_crashWave;
 	};
 }

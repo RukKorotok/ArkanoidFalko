@@ -5,6 +5,7 @@
 #include "SFML/Graphics.hpp"
 #include "Math.h"
 #include "UI.h"
+#include "Observer.h"
 
 namespace Arkanoid
 {
@@ -31,7 +32,7 @@ namespace Arkanoid
 		sf::Sprite m_sprite;
 	};
 
-	class MenuItem
+	class MenuItem : public InputObserver
 	{
 	public:
 
@@ -39,6 +40,11 @@ namespace Arkanoid
 
 		virtual void Visualize(sf::RenderWindow& window, Vector2D tabIndex);
 		std::string GetString();
+		void ChangeText(std::string newText);
+		//Handlers
+		void DoOnChangedMousePosition(float position) override {}
+		void DoOnInput(sf::Keyboard::Key key) override {}
+		void DoOnInputText(sf::Uint32 unicode) override {}
 
 	protected:
 

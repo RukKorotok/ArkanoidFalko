@@ -30,6 +30,8 @@ namespace Arkanoid
 		void SetSelection(bool selected);
 		std::string GetAction();
 		bool GetSelected();
+		//Handler
+		void DoOnInput(sf::Keyboard::Key key) override;
 
 	protected:
 
@@ -72,6 +74,8 @@ namespace Arkanoid
 			{"Exit", State::ExitGame},
 			{"Resume", State::ResumeGame},
 			{"Main", State::Main},
+			{">>", State::Load},
+			{"<<", State::Save},
 		};
 
 		const Vector2D m_MENU_CHECKBOX_INDETATION = { SCREEN_WIDTH - 50.0f, 110.0f };
@@ -84,24 +88,28 @@ namespace Arkanoid
 		std::string m_secondAction = "";
 	};
 
-	class Menu
+	class Menu : public InputObserver
 	{
 	public:
-		Menu(const std::string& section, const INIReader& reader, int index);
+		Menu(const std::string& section, const INIReader& reader, int index, bool customTitle, std::string title);
 		~Menu();
 
 		virtual void DrawMenu(sf::RenderWindow& window, Vector2D tabMenu);
-		void AddMenuItems(const std::string& section, const INIReader& reader);
-		void SwitchMenuItem(bool down);
 		std::stack<std::map<int, std::shared_ptr<MenuItemWithAction>>> GetStack();
-		void AddMenuStackItem(std::map<int, std::shared_ptr<MenuItemWithAction>> menuItem);
+		void AddMenuItems(const std::string& section, const INIReader& reader, bool customTitle, std::string title);
 		void RemoveMenuStackItem();
 		int GetMenuPointer();
 		void SetMenuPointer(int pointer);
 		std::map<int, std::shared_ptr<MenuItemWithAction>> GetMenuActiveItemList();
-	protected:
+		//Handler
+		void DoOnChangedMousePosition(float position) override {}
+		void DoOnInput(sf::Keyboard::Key key) override;
+		void DoOnInputText(sf::Uint32 unicode) override {}
 
-		virtual std::map<int, std::shared_ptr<MenuItemWithAction>> LoadMenuItems(const std::string& section, const INIReader& reader);
+
+	protected:
+		void SwitchMenuItem(bool down);
+		virtual std::map<int, std::shared_ptr<MenuItemWithAction>> LoadMenuItems(const std::string& section, const INIReader& reader, bool customTitle, std::string title);
 
 		std::stack<std::map<int, std::shared_ptr<MenuItemWithAction>>> m_menuStack;
 		int m_menuPointer = 1;
@@ -109,14 +117,29 @@ namespace Arkanoid
 		int m_index = 0;
 	};
 
-	class RecordsMenu : public Menu
+	class RecordsMenu final : public Menu
 	{
 	public:
 
 		RecordsMenu(const std::string& section, const INIReader& reader, int index) :
-			Menu(section, reader, index) {
+			Menu(section, reader, index, false, "") {
 		}
 
 		void DrawMenu(sf::RenderWindow& window, Vector2D tabMenu) override;
+	};
+
+	class InputMenu final : public Menu
+	{
+	public:
+		InputMenu(const std::string& section, const INIReader& reader, int index) :
+			Menu(section, reader, index, true, "") {
+		}
+
+		//Handlers
+		void DoOnInput(sf::Keyboard::Key key) override;
+		void DoOnInputText(sf::Uint32 unicode) override;
+
+	private:
+		std::string m_name;
 	};
 }
